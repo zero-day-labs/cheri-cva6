@@ -258,6 +258,7 @@ package riscv;
   localparam OpcodeSystem = 7'b11_100_11;
   localparam OpcodeRsrvd3 = 7'b11_101_11;
   localparam OpcodeCustom3 = 7'b11_110_11;
+  localparam OpcodeCheri     = 7'b10_110_11;
 
   // RV64C/RV32C listings:
   // Quadrant 0
@@ -297,6 +298,11 @@ package riscv;
   // ----------------------
   // memory management, pte for sv39
   typedef struct packed {
+    logic cw;
+    logic cr;
+    logic cd;
+    logic crm;
+    logic crg;
     logic [9:0] reserved;
     logic [44-1:0] ppn;  // PPN length for
     logic [1:0] rsw;
@@ -323,6 +329,46 @@ package riscv;
     logic r;
     logic v;
   } pte_sv32_t;
+
+  // memory management, pte for sv39 CHERI
+    // capability store bits behavior table
+    // ----------------------------------------------------------------------
+    // | CW | CD | Behavior                                                 |
+    // |----|----|-----------------------------------------------------------
+    // | 0  | X  | Trap on capability stores (exception code 0x1B)          |
+    // | 1  | 0  | Capability stores atomically raise CD or fault (as above)|
+    // | 1  | 1  | Capability stores permitted                              |
+    // ----------------------------------------------------------------------
+    // capability load bits behavior table
+    // ----------------------------------------------------------------------
+    // | CR | CRM | CRG | Behavior                                          |
+    // |----|-----|----------------------------------------------------------
+    // | 0  | 0   |  0  | Capability loads strip tags on loaded result      |
+    // | 0  | 1   |  0  | Capability loads fault (exception code 0x1A)      |
+    // | 0  | X   |  1  | Reserved for future use                           |
+    // | 1  | 0   |  0  | Capability loads are unaltered                    |
+    // | 1  | 0   |  1  | Reserved for future use                           |
+    // | 1  | 1   |  X  | Reserved for generational load barriers           |
+    // ----------------------------------------------------------------------
+    
+    typedef struct packed {
+        logic cw;
+        logic cr;
+        logic cd;
+        logic crm;
+        logic crg;
+        logic [4:0]  reserved;
+        logic [44-1:0] ppn; // PPN length for
+        logic [1:0]  rsw;
+        logic d;
+        logic a;
+        logic g;
+        logic u;
+        logic x;
+        logic w;
+        logic r;
+        logic v;
+    } pte_sv39_cheri_t;
 
   // ----------------------
   // Exception Cause Codes
@@ -417,6 +463,8 @@ package riscv;
     CSR_STVAL            = 12'h143,
     CSR_SIP              = 12'h144,
     CSR_SATP             = 12'h180,
+    // CHERI: Supervisor Mode CCSRs
+        CSR_SCCSR         = 12'h9C0,
     // Hypervisor-extended Supervisor Mode CSRs
     CSR_HSTATUS          = 12'h600,
     CSR_HEDELEG          = 12'h602,
@@ -571,6 +619,8 @@ package riscv;
     CSR_MHPM_COUNTER_29H = 12'hB9D,  // reserved
     CSR_MHPM_COUNTER_30H = 12'hB9E,  // reserved
     CSR_MHPM_COUNTER_31H = 12'hB9F,  // reserved
+    //CHERI: Machine Mode CCSRs
+        CSR_MCCSR         = 12'hBC0,
     // Cache Control (platform specifc)
     CSR_DCACHE           = 12'h7C1,
     CSR_ICACHE           = 12'h7C0,

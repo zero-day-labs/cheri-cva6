@@ -64,6 +64,10 @@ package config_pkg;
     bit                          RVZCMP;
     // Zicond RISC-V extension
     bit                          RVZiCond;
+    // Zcheripurecap RISC-V extension
+    bit                          RVZcheripurecap;
+    // Zcherihybrid RISC-V extension
+    bit                          RVZcherihybrid;
     // Floating Point
     bit                          RVF;
     // Floating Point
@@ -188,16 +192,22 @@ package config_pkg;
     bit unsigned                 UseSharedTlb;
     // MMU depth of shared TLB
     int unsigned                 SharedTlbDepth;
+    // Cheri capability tag width
+    int unsigned                 CheriCapTagWidth;
   } cva6_user_cfg_t;
 
   typedef struct packed {
     int unsigned XLEN;
+    int unsigned CLEN;
+    int unsigned REGLEN;
+    int unsigned PCLEN;
     int unsigned VLEN;
     int unsigned PLEN;
     int unsigned GPLEN;
     bit IS_XLEN32;
     bit IS_XLEN64;
     int unsigned XLEN_ALIGN_BYTES;
+    int unsigned CLEN_ALIGN_BYTES;
     int unsigned ASID_WIDTH;
     int unsigned VMID_WIDTH;
 
@@ -231,11 +241,14 @@ package config_pkg;
     bit          XFVec;
     bit          CvxifEn;
     bit          RVZiCond;
+    bit          RVZcheripurecap;
+    bit          RVZcherihybrid;
 
     int unsigned NR_SB_ENTRIES;
     int unsigned TRANS_ID_BITS;
 
     bit          FpPresent;
+    bit          CheriPresent;
     bit          NSX;
     int unsigned FLen;
     bit          RVFVec;
@@ -299,6 +312,7 @@ package config_pkg;
     int unsigned DCACHE_USER_LINE_WIDTH;
     int unsigned DCACHE_USER_WIDTH;
     int unsigned DCACHE_OFFSET_WIDTH;
+    int unsigned DCACHE_DATA_SIZE_WIDTH;
     int unsigned DCACHE_NUM_WORDS;
 
     int unsigned DCACHE_MAX_TX;
@@ -313,6 +327,8 @@ package config_pkg;
     int unsigned FETCH_ALIGN_BITS;
     int unsigned INSTR_PER_FETCH;
     int unsigned LOG2_INSTR_PER_FETCH;
+
+    int unsigned CheriCapTagWidth;
 
     int unsigned ModeW;
     int unsigned ASIDW;

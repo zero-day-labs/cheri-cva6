@@ -64,6 +64,8 @@ module wt_axi_adapter
   localparam MaxNumWords = $clog2(CVA6Cfg.AxiDataWidth / 8);
   localparam AxiRdBlenIcache = CVA6Cfg.ICACHE_LINE_WIDTH / CVA6Cfg.AxiDataWidth - 1;
   localparam AxiRdBlenDcache = CVA6Cfg.DCACHE_LINE_WIDTH / CVA6Cfg.AxiDataWidth - 1;
+  localparam AxiWdBlenDcache = CVA6Cfg.CLEN / CVA6Cfg.AxiDataWidth - 1;
+  localparam AxiWNumWords = (CVA6Cfg.CLEN/CVA6Cfg.AxiDataWidth);
 
   ///////////////////////////////////////////////////////
   // request path
@@ -138,13 +140,20 @@ module wt_axi_adapter
   always_comb begin : p_axi_req
     // write channel
     axi_wr_id_in = {{CVA6Cfg.AxiIdWidth-1{1'b0}}, arb_idx};
-    axi_wr_data[0]  = {(CVA6Cfg.AxiDataWidth/CVA6Cfg.XLEN){dcache_data.data}};
-    axi_wr_user[0]  = dcache_data.user;
+    if (dcache_data.size[2]) begin
+      for (int k = 0; k < AxiWNumWords; k ++) begin
+        axi_wr_data[k]  = dcache_data.data[k*CVA6Cfg.XLEN+:CVA6Cfg.XLEN];
+        axi_wr_user[k]  = dcache_data.user;
+      end
+    end else begin
+      axi_wr_data[0]  = {(CVA6Cfg.AxiDataWidth/CVA6Cfg.XLEN){dcache_data.data[CVA6Cfg.XLEN-1:0]}};
+      axi_wr_user[0]  = dcache_data.user;
+    end
     // Cast to AXI address width
     axi_wr_addr  = {{CVA6Cfg.AxiAddrWidth-CVA6Cfg.PLEN{1'b0}}, dcache_data.paddr};
-    axi_wr_size  = dcache_data.size;
+    axi_wr_size  = dcache_data.size[2] ? MaxNumWords[2:0] : dcache_data.size;
     axi_wr_req   = 1'b0;
-    axi_wr_blen  = '0;// single word writes
+    axi_wr_blen  = dcache_data.size[2] ? AxiWdBlenDcache : 0;
     axi_wr_be    = '0;
     axi_wr_lock  = '0;
     axi_wr_atop  = '0;
@@ -157,11 +166,11 @@ module wt_axi_adapter
     axi_rd_lock  = '0;
     axi_rd_blen  = '0;
 
-    if (dcache_data.paddr[2] == 1'b0) begin
+    /* if (dcache_data.paddr[2] == 1'b0) begin
       axi_wr_user = {{64 - CVA6Cfg.AxiUserWidth{1'b0}}, dcache_data.user};
     end else begin
       axi_wr_user = {dcache_data.user, {64 - CVA6Cfg.AxiUserWidth{1'b0}}};
-    end
+    end */
 
     // arbiter mux
     if (arb_idx) begin
@@ -202,18 +211,23 @@ module wt_axi_adapter
           wt_cache_pkg::DCACHE_STORE_REQ: begin
             axi_wr_req = 1'b1;
             axi_wr_be  = '0;
-            unique case (dcache_data.size[1:0])
-              2'b00:
+            unique case (dcache_data.size[2:0])
+              3'b000:
               axi_wr_be[0][dcache_data.paddr[$clog2(CVA6Cfg.AxiDataWidth/8)-1:0]] = '1;  // byte
-              2'b01:
+              3'b001:
               axi_wr_be[0][dcache_data.paddr[$clog2(CVA6Cfg.AxiDataWidth/8)-1:0]+:2] = '1;  // hword
-              2'b10:
+              3'b010:
               axi_wr_be[0][dcache_data.paddr[$clog2(CVA6Cfg.AxiDataWidth/8)-1:0]+:4] = '1;  // word
-              default:
+              3'b011:
               if (CVA6Cfg.IS_XLEN64)
                 axi_wr_be[0][dcache_data.paddr[$clog2(
                     CVA6Cfg.AxiDataWidth/8
                 )-1:0]+:8] = '1;  // dword
+              default: begin
+                for(int k = 0;  k < AxiWNumWords; k++) begin
+                  axi_wr_be[k] = '1;
+                end
+              end
             endcase
           end
           //////////////////////////////////////

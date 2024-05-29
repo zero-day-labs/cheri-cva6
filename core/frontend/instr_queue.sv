@@ -59,6 +59,8 @@ module instr_queue
     input logic [CVA6Cfg.INSTR_PER_FETCH-1:0][31:0] instr_i,
     // Instruction address - instr_realign
     input logic [CVA6Cfg.INSTR_PER_FETCH-1:0][CVA6Cfg.VLEN-1:0] addr_i,
+    // Instruction Capability - instr_realign
+    input  logic [CVA6Cfg.PCLEN-1:0] pc_i,
     // Instruction is valid - instr_realign
     input logic [CVA6Cfg.INSTR_PER_FETCH-1:0] valid_i,
     // Handshake’s ready with CACHE - CACHE
@@ -129,8 +131,8 @@ ariane_pkg::FETCH_FIFO_DEPTH
   // rotated by N
   logic [ariane_pkg::SUPERSCALAR+1:0][CVA6Cfg.INSTR_PER_FETCH-1:0] idx_ds;
 
-  logic [CVA6Cfg.VLEN-1:0] pc_d, pc_q;  // current PC
-  logic [ariane_pkg::SUPERSCALAR+1:0][CVA6Cfg.VLEN-1:0] pc_j;
+  logic [CVA6Cfg.PCLEN-1:0] pc_d, pc_q;  // current PC
+  logic [ariane_pkg::SUPERSCALAR+1:0][CVA6Cfg.PCLEN-1:0] pc_j;
   logic reset_address_d, reset_address_q;  // we need to re-set the address because of a flush
 
   logic [ariane_pkg::SUPERSCALAR:0] fetch_entry_is_cf, fetch_entry_fire;
@@ -397,7 +399,7 @@ ariane_pkg::FETCH_FIFO_DEPTH
       idx_ds_d = '0;
       idx_is_d = '0;
       fetch_entry_o[0].instruction = instr_data_out[0].instr;
-      fetch_entry_o[0].address = pc_q;
+      fetch_entry_o[0].pc = pc_q;
 
       fetch_entry_o[0].ex.valid = instr_data_out[0].ex != ariane_pkg::FE_NONE;
       if (instr_data_out[0].ex == ariane_pkg::FE_INSTR_ACCESS_FAULT) begin
@@ -437,9 +439,13 @@ ariane_pkg::FETCH_FIFO_DEPTH
   // ----------------------
   assign pc_j[0] = pc_q;
   for (genvar i = 0; i <= ariane_pkg::SUPERSCALAR; i++) begin
-    assign pc_j[i+1] = fetch_entry_is_cf[i] ? address_out : (
-      pc_j[i] + ((fetch_entry_o[i].instruction[1:0] != 2'b11) ? 'd2 : 'd4)
-    );
+    if (CVA6Cfg.CheriPresent) begin
+      assign pc_j[i+1] = fetch_entry_is_cf[i] ? cva6_cheri_pkg::set_cap_pcc_cursor(pc_j[i], address_out) : cva6_cheri_pkg::set_cap_pcc_cursor(pc_j[i], pc_j[i][CVA6Cfg.XLEN-1:0] + ((fetch_entry_o[i].instruction[1:0] != 2'b11) ? 'd2 : 'd4));
+    end else begin 
+      assign pc_j[i+1] = fetch_entry_is_cf[i] ? address_out : (
+        pc_j[i] + ((fetch_entry_o[i].instruction[1:0] != 2'b11) ? 'd2 : 'd4)
+      );
+    end
   end
 
   always_comb begin
@@ -458,7 +464,11 @@ ariane_pkg::FETCH_FIFO_DEPTH
     // we previously flushed so we need to reset the address
     if (valid_i[0] && reset_address_q) begin
       // this is the base of the first instruction
-      pc_d = addr_i[0];
+      if (CVA6Cfg.CheriPresent) begin
+        pc_d = cva6_cheri_pkg::set_cap_pcc_cursor(pc_i, addr_i[0]);
+      end else begin
+        pc_d = addr_i[0];
+      end
       reset_address_d = 1'b0;
     end
   end

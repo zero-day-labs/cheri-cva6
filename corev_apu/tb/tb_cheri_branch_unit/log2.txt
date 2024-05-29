@@ -1,0 +1,1330 @@
+/home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_branch_unit/logs/
+<----Building Verilator Model for ---->
+/home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_alu/verilator/bin/verilator  ../../../core/include/cv64a6_imacfd_sv39_config_pkg.sv ../../../core/include/riscv_pkg.sv ../../riscv-dbg/src/dm_pkg.sv ../../../core/include/cva6_cheri_pkg.sv ../../../core/include/ariane_pkg.sv ../../../core/branch_unit.sv ../../../core/include/cv64a6_imacfd_sv39_config_pkg.sv ../../tb/tb_cheri_alu/hdl/cheri_alu_testharness.sv --unroll-count 256 -Werror-PINMISSING -Werror-IMPLICIT -Wno-fatal -Wno-PINCONNECTEMPTY -Wno-ASSIGNDLY -Wno-DECLFILENAME -Wno-UNUSED -Wno-UNOPTFLAT -Wno-BLKANDNBLK -Wno-style --trace --trace-structs -LDFLAGS "-L/home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_branch_unit/work-ver/gtest/build//lib -L/media/ninolomata/shared/Test_Plan_CVA6/riscv-tools/toolchain//lib -Wl,-rpath,/media/ninolomata/shared/Test_Plan_CVA6/riscv-tools/toolchain//lib -lfesvr -lpthread -lgtest" -CFLAGS "-I/media/ninolomata/shared/Test_Plan_CVA6/riscv-tools/toolchain//include -std=c++14 -I/corev_apu/tb/dpi -I/home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_branch_unit/work-ver/gtest/build//googletest/include/ -I/home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_alu/verilator/ -O3 -DVL_DEBUG -DVM_TRACE" -Wall --cc /home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_branch_unit//hdl/cheri_branch_unit_testharness.sv --top-module cheri_branch_unit_testharness --Mdir /home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_branch_unit/work-ver/ -O3 --exe /home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_branch_unit//src/cheri_branch_unit_tb.cpp
+%Warning-EOFNEWLINE: /home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_branch_unit//hdl/cheri_branch_unit_testharness.sv:186:10: Missing newline at end of file (POSIX 3.206).
+                                                                                                                                                              : ... Suggest add newline.
+  186 | endmodule
+      |          ^
+                     ... For warning description see https://verilator.org/warn/EOFNEWLINE?v=5.012
+                     ... Use "/* verilator lint_off EOFNEWLINE */" and lint_on around source to disable this message.
+%Warning-MODDUP: ../../../core/include/cv64a6_imacfd_sv39_config_pkg.sv:11:9: Duplicate declaration of module: 'cva6_config_pkg'
+   11 | package cva6_config_pkg;
+      |         ^~~~~~~~~~~~~~~
+                 ../../../core/include/cv64a6_imacfd_sv39_config_pkg.sv:11:9: ... Location of original declaration
+   11 | package cva6_config_pkg;
+      |         ^~~~~~~~~~~~~~~
+%Warning-DECLFILENAME: ../../../core/include/cv64a6_imacfd_sv39_config_pkg.sv:11:9: Filename 'cv64a6_imacfd_sv39_config_pkg' does not match PACKAGE name: 'cva6_config_pkg'
+   11 | package cva6_config_pkg;
+      |         ^~~~~~~~~~~~~~~
+%Warning-DECLFILENAME: ../../../core/include/riscv_pkg.sv:18:9: Filename 'riscv_pkg' does not match PACKAGE name: 'riscv'
+   18 | package riscv;
+      |         ^~~~~
+%Warning-DECLFILENAME: ../../riscv-dbg/src/dm_pkg.sv:19:9: Filename 'dm_pkg' does not match PACKAGE name: 'dm'
+   19 | package dm;
+      |         ^~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:303:9: Operator PATMEMBER expects 6 bits on the Pattern value, but Pattern value's VARREF 'CAP_RESET_EXP' generates 32 or 7 bits.
+  303 |         exp          : CAP_RESET_EXP,
+      |         ^~~
+%Warning-WIDTHEXPAND: ../../../core/include/riscv_pkg.sv:441:70: Operator OR expects 64 bits on the RHS, but RHS's VARREF 'IRQ_S_SOFT' generates 32 bits.
+                                                               : ... In instance cheri_branch_unit_testharness
+  441 |     localparam logic [XLEN-1:0] S_SW_INTERRUPT     = (1 << (XLEN-1)) | IRQ_S_SOFT;
+      |                                                                      ^
+%Warning-WIDTHEXPAND: ../../../core/include/riscv_pkg.sv:442:70: Operator OR expects 64 bits on the RHS, but RHS's VARREF 'IRQ_VS_SOFT' generates 32 bits.
+                                                               : ... In instance cheri_branch_unit_testharness
+  442 |     localparam logic [XLEN-1:0] VS_SW_INTERRUPT    = (1 << (XLEN-1)) | IRQ_VS_SOFT;
+      |                                                                      ^
+%Warning-WIDTHEXPAND: ../../../core/include/riscv_pkg.sv:443:70: Operator OR expects 64 bits on the RHS, but RHS's VARREF 'IRQ_M_SOFT' generates 32 bits.
+                                                               : ... In instance cheri_branch_unit_testharness
+  443 |     localparam logic [XLEN-1:0] M_SW_INTERRUPT     = (1 << (XLEN-1)) | IRQ_M_SOFT;
+      |                                                                      ^
+%Warning-WIDTHEXPAND: ../../../core/include/riscv_pkg.sv:444:70: Operator OR expects 64 bits on the RHS, but RHS's VARREF 'IRQ_S_TIMER' generates 32 bits.
+                                                               : ... In instance cheri_branch_unit_testharness
+  444 |     localparam logic [XLEN-1:0] S_TIMER_INTERRUPT  = (1 << (XLEN-1)) | IRQ_S_TIMER;
+      |                                                                      ^
+%Warning-WIDTHEXPAND: ../../../core/include/riscv_pkg.sv:445:70: Operator OR expects 64 bits on the RHS, but RHS's VARREF 'IRQ_VS_TIMER' generates 32 bits.
+                                                               : ... In instance cheri_branch_unit_testharness
+  445 |     localparam logic [XLEN-1:0] VS_TIMER_INTERRUPT = (1 << (XLEN-1)) | IRQ_VS_TIMER;
+      |                                                                      ^
+%Warning-WIDTHEXPAND: ../../../core/include/riscv_pkg.sv:446:70: Operator OR expects 64 bits on the RHS, but RHS's VARREF 'IRQ_M_TIMER' generates 32 bits.
+                                                               : ... In instance cheri_branch_unit_testharness
+  446 |     localparam logic [XLEN-1:0] M_TIMER_INTERRUPT  = (1 << (XLEN-1)) | IRQ_M_TIMER;
+      |                                                                      ^
+%Warning-WIDTHEXPAND: ../../../core/include/riscv_pkg.sv:447:70: Operator OR expects 64 bits on the RHS, but RHS's VARREF 'IRQ_S_EXT' generates 32 bits.
+                                                               : ... In instance cheri_branch_unit_testharness
+  447 |     localparam logic [XLEN-1:0] S_EXT_INTERRUPT    = (1 << (XLEN-1)) | IRQ_S_EXT;
+      |                                                                      ^
+%Warning-WIDTHEXPAND: ../../../core/include/riscv_pkg.sv:448:70: Operator OR expects 64 bits on the RHS, but RHS's VARREF 'IRQ_VS_EXT' generates 32 bits.
+                                                               : ... In instance cheri_branch_unit_testharness
+  448 |     localparam logic [XLEN-1:0] VS_EXT_INTERRUPT   = (1 << (XLEN-1)) | IRQ_VS_EXT;
+      |                                                                      ^
+%Warning-WIDTHEXPAND: ../../../core/include/riscv_pkg.sv:449:70: Operator OR expects 64 bits on the RHS, but RHS's VARREF 'IRQ_M_EXT' generates 32 bits.
+                                                               : ... In instance cheri_branch_unit_testharness
+  449 |     localparam logic [XLEN-1:0] M_EXT_INTERRUPT    = (1 << (XLEN-1)) | IRQ_M_EXT;
+      |                                                                      ^
+%Warning-WIDTHEXPAND: ../../../core/include/riscv_pkg.sv:450:70: Operator OR expects 64 bits on the RHS, but RHS's VARREF 'IRQ_HS_EXT' generates 32 bits.
+                                                               : ... In instance cheri_branch_unit_testharness
+  450 |     localparam logic [XLEN-1:0] HS_EXT_INTERRUPT   = (1 << (XLEN-1)) | IRQ_HS_EXT;
+      |                                                                      ^
+%Warning-WIDTHEXPAND: ../../../core/include/riscv_pkg.sv:455:33: Operator VAR 'READ_32_PSEUDOINSTRUCTION' expects 64 bits on the Initial value, but Initial value's CONST '32'h2000' generates 32 bits.
+                                                               : ... In instance cheri_branch_unit_testharness
+  455 |     localparam logic [XLEN-1:0] READ_32_PSEUDOINSTRUCTION  = 32'h00002000;
+      |                                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+%Warning-WIDTHEXPAND: ../../../core/include/riscv_pkg.sv:456:33: Operator VAR 'WRITE_32_PSEUDOINSTRUCTION' expects 64 bits on the Initial value, but Initial value's CONST '32'h2020' generates 32 bits.
+                                                               : ... In instance cheri_branch_unit_testharness
+  456 |     localparam logic [XLEN-1:0] WRITE_32_PSEUDOINSTRUCTION = 32'h00002020;
+      |                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+%Warning-WIDTHEXPAND: ../../../core/include/ariane_pkg.sv:64:7: Operator PATMEMBER expects 1024 bits on the Pattern value, but Pattern value's REPLICATE generates 128 bits.
+   64 |       NonIdempotentAddrBase: {64'b0, 64'b0},
+      |       ^~~~~~~~~~~~~~~~~~~~~
+%Warning-WIDTHEXPAND: ../../../core/include/ariane_pkg.sv:65:7: Operator PATMEMBER expects 1024 bits on the Pattern value, but Pattern value's REPLICATE generates 128 bits.
+   65 |       NonIdempotentLength:   {64'b0, 64'b0},
+      |       ^~~~~~~~~~~~~~~~~~~
+%Warning-WIDTHEXPAND: ../../../core/include/ariane_pkg.sv:68:7: Operator PATMEMBER expects 1024 bits on the Pattern value, but Pattern value's REPLICATE generates 192 bits.
+   68 |       ExecuteRegionAddrBase: {64'h8000_0000, 64'h1_0000, 64'h0},
+      |       ^~~~~~~~~~~~~~~~~~~~~
+%Warning-WIDTHEXPAND: ../../../core/include/ariane_pkg.sv:69:7: Operator PATMEMBER expects 1024 bits on the Pattern value, but Pattern value's REPLICATE generates 192 bits.
+   69 |       ExecuteRegionLength:   {64'h40000000,  64'h10000,  64'h1000},
+      |       ^~~~~~~~~~~~~~~~~~~
+%Warning-WIDTHEXPAND: ../../../core/include/ariane_pkg.sv:72:7: Operator PATMEMBER expects 1024 bits on the Pattern value, but Pattern value's REPLICATE generates 64 bits.
+   72 |       CachedRegionAddrBase:  {64'h8000_0000},
+      |       ^~~~~~~~~~~~~~~~~~~~
+%Warning-WIDTHEXPAND: ../../../core/include/ariane_pkg.sv:73:7: Operator PATMEMBER expects 1024 bits on the Pattern value, but Pattern value's REPLICATE generates 64 bits.
+   73 |       CachedRegionLength:    {64'h40000000},
+      |       ^~~~~~~~~~~~~~~~~~
+%Warning-WIDTHEXPAND: ../../../core/include/ariane_pkg.sv:213:46: Operator SHIFTL expects 64 bits on the LHS, but LHS's VARREF 'RVA' generates 1 bits.
+  213 |     localparam riscv::xlen_t ISA_CODE = (RVA <<  0)   
+      |                                              ^~
+%Warning-WIDTHEXPAND: ../../../core/include/ariane_pkg.sv:215:45: Operator SHIFTL expects 64 bits on the LHS, but LHS's VARREF 'RVD' generates 1 bits.
+  215 |                                      | (RVD <<  3)   
+      |                                             ^~
+%Warning-WIDTHEXPAND: ../../../core/include/ariane_pkg.sv:216:45: Operator SHIFTL expects 64 bits on the LHS, but LHS's VARREF 'RVF' generates 1 bits.
+  216 |                                      | (RVF <<  5)   
+      |                                             ^~
+%Warning-WIDTHEXPAND: ../../../core/include/ariane_pkg.sv:223:45: Operator SHIFTL expects 64 bits on the LHS, but LHS's VARREF 'NSX' generates 1 bits.
+  223 |                                      | (NSX << 23)   
+      |                                             ^~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:423:23: Operator ASSIGN expects 14 bits on the Assign RHS, but Assign RHS's SHIFTR generates 64 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  423 |         ret.addr_mid  = ret.addr >> cap.exp;
+      |                       ^
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:458:39: Operator ASSIGN expects 64 bits on the Assign RHS, but Assign RHS's VARREF 'otype' generates 18 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  458 |         addrw_t type_unsigned       = otype;
+      |                                       ^~~~~
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:459:39: Operator ASSIGN expects 64 bits on the Assign RHS, but Assign RHS's SIGNED generates 18 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  459 |         addrw_t otype_max_unsigned  = $signed(OTYPE_MAX);
+      |                                       ^~~~~~~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:503:34: Operator ASSIGN expects 3 bits on the Assign RHS, but Assign RHS's SHIFTR generates 64 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  503 |         logic [2:0] a = cap.addr >> (cap.bounds.exp + CAP_M_WIDTH-3);
+      |                                  ^~
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:536:74: Operator SHIFTL expects 64 bits on the LHS, but LHS's SIGNED generates 16 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  536 |         offset_base  = $signed({cap_meta_data.cb, cap.bounds.base_bits}) << cap.bounds.exp;
+      |                                                                          ^~
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:555:72: Operator SHIFTL expects 65 bits on the LHS, but LHS's SIGNED generates 16 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  555 |         offset_top  = $signed({cap_meta_data.ct, cap.bounds.top_bits}) << cap.bounds.exp;
+      |                                                                        ^~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:567:17: Operator ASSIGN expects 1 bits on the Assign RHS, but Assign RHS's SEL generates 2 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  567 |         top_msb = ret[CAP_ADDR_WIDTH:CAP_ADDR_WIDTH-1];
+      |                 ^
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:568:33: Operator AND expects 65 bits on the LHS, but LHS's SEL generates 64 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  568 |         offset_base = (cap.addr & msk_top_bits) + ($signed({cap_meta_data.cb, cap.bounds.base_bits}) << cap.bounds.exp);
+      |                                 ^
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:568:102: Operator SHIFTL expects 65 bits on the LHS, but LHS's SIGNED generates 16 bits.
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  568 |         offset_base = (cap.addr & msk_top_bits) + ($signed({cap_meta_data.cb, cap.bounds.base_bits}) << cap.bounds.exp);
+      |                                                                                                      ^~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:569:18: Operator ASSIGN expects 1 bits on the Assign RHS, but Assign RHS's REPLICATE generates 2 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  569 |         base_msb = {1'b0, offset_base[CAP_ADDR_WIDTH-1]};
+      |                  ^
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:571:29: Operator LT expects 32 or 7 bits on the LHS, but LHS's SEL generates 6 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  571 |         if ((cap.bounds.exp < (CAP_RESET_EXP-1)) && ((top_msb - base_msb) > 1))
+      |                             ^
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:574:32: Operator GTE expects 32 or 7 bits on the LHS, but LHS's SEL generates 6 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  574 |         return (cap.bounds.exp >= CAP_RESET_EXP) ? ~(1 << riscv::XLEN) : ret;
+      |                                ^~
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:590:16: Operator ASSIGN expects 65 bits on the Assign RHS, but Assign RHS's UNSIGNED generates 16 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  590 |         length = $unsigned($unsigned(top_mid_bits - base_mid_bits) << cap.bounds.exp);
+      |                ^
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:592:32: Operator GTE expects 32 or 7 bits on the LHS, but LHS's SEL generates 6 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  592 |         return (cap.bounds.exp >= CAP_RESET_EXP) ? ~(1 << riscv::XLEN) : length;
+      |                                ^~
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:615:32: Operator OR expects 64 bits on the LHS, but LHS's VARREF 'offset' generates 16 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  615 |         return $signed( offset | offset_lsb);
+      |                                ^
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:631:90: Operator SHIFTL expects 64 bits on the LHS, but LHS's SIGNED generates 2 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  631 |         addrw_t deltaAddrHi = $signed({1'b0,newAddrHi} - {1'b0,cap_meta_data.addr_hi_r}) << (cap.bounds.exp + CAP_M_WIDTH);
+      |                                                                                          ^~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:637:22: Operator ASSIGN expects 14 bits on the Assign RHS, but Assign RHS's SHIFTR generates 64 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  637 |         ret.addr_mid = address >> cap.bounds.exp;
+      |                      ^
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:667:24: Operator ASSIGN expects 64 bits on the Assign RHS, but Assign RHS's SIGNED generates 1 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  667 |         addrw_t sign = $signed(offset[CAP_ADDR_WIDTH-1]);
+      |                        ^~~~~~~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:689:35: Operator ASSIGN expects 14 bits on the Assign RHS, but Assign RHS's SHIFTR generates 64 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  689 |         mw_t offset_mid  = offset >> (cap.bounds.exp);
+      |                                   ^~
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:728:64: Operator GTE expects 32 or 7 bits on the LHS, but LHS's SEL generates 6 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  728 |         in_bounds = (in_range && in_limits) || (cap.bounds.exp >= (CAP_RESET_EXP - 2));
+      |                                                                ^~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:737:22: Operator ASSIGN expects 14 bits on the Assign RHS, but Assign RHS's SHIFTR generates 64 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  737 |         ret.addr_mid = cursor >> cap.bounds.exp;
+      |                      ^
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:803:34: Operator ASSIGN expects 6 bits on the Assign RHS, but Assign RHS's SUB generates 32 or 7 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  803 |         ew_t exp = CAP_RESET_EXP - cnt_zeros;
+      |                                  ^
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:807:36: Operator EQ expects 32 or 7 bits on the LHS, but LHS's VARREF 'cnt_zeros' generates 6 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  807 |         bool_t int_e = !(cnt_zeros == (CAP_RESET_EXP-1) && length[CAP_M_WIDTH-2] == 1'b0);
+      |                                    ^~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:810:41: Operator ASSIGN expects 16 bits on the Assign RHS, but Assign RHS's SHIFTR generates 66 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  810 |         mwe2_t new_base_bits = new_base >> exp;
+      |                                         ^~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:811:29: Operator ASSIGN expects 66 bits on the Assign RHS, but Assign RHS's REPLICATE generates 67 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  811 |         addrwe2_t new_len = {2'b00, length};
+      |                             ^
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:813:39: Operator ASSIGN expects 16 bits on the Assign RHS, but Assign RHS's SHIFTR generates 66 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  813 |         mwe2_t new_top_bits = new_top >> exp;
+      |                                       ^~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:833:47: Operator ASSIGN expects 14 bits on the Assign RHS, but Assign RHS's SHIFTR generates 16 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  833 |         mw_t new_top_bits_over = new_top_bits >> 1;
+      |                                               ^~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:834:49: Operator ASSIGN expects 14 bits on the Assign RHS, but Assign RHS's SHIFTR generates 16 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  834 |         mw_t new_base_bits_over = new_base_bits >> 1;
+      |                                                 ^~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:837:36: Operator ASSIGN expects 65 bits on the Assign RHS, but Assign RHS's REPLICATE generates 68 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  837 |         addrwe_t new_length_over = {2'b00, new_len};
+      |                                    ^
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:839:46: Logical operator LOGOR expects 1 bit on the LHS, but LHS's VARREF 'lmsk_carry_in_bit' generates 66 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  839 |         if (is_len_max && (lmsk_carry_in_bit || round_up_length)) length_over = 1'b1;
+      |                                              ^~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:840:33: Logical operator LOGAND expects 1 bit on the RHS, but RHS's VARREF 'lmsk_carry_in_bit' generates 66 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  840 |         if (is_len_max_less_one && lmsk_carry_in_bit && round_up_length) length_over = 1'b1;
+      |                                 ^~
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:854:68: Operator ADD expects 16 bits on the RHS, but RHS's CONST '14'h8' generates 14 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  854 |             ret.cap.bounds.top_bits = lost_lsb_top ? (new_top_bits + 14'b00000000001000)
+      |                                                                    ^
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:854:37: Operator ASSIGN expects 14 bits on the Assign RHS, but Assign RHS's COND generates 16 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  854 |             ret.cap.bounds.top_bits = lost_lsb_top ? (new_top_bits + 14'b00000000001000)
+      |                                     ^
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:856:38: Operator ASSIGN expects 14 bits on the Assign RHS, but Assign RHS's VARREF 'new_base_bits' generates 16 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  856 |             ret.cap.bounds.base_bits = new_base_bits;
+      |                                      ^
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:868:29: Operator ASSIGN expects 65 bits on the Assign RHS, but Assign RHS's ADD generates 66 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  868 |             new_length_over = new_len + lmsk_carry_in_bit;
+      |                             ^
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:870:48: Operator AND expects 66 bits on the LHS, but LHS's VARREF 'new_length_over' generates 65 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  870 |             new_length_over = (new_length_over & (~lmsk_exp_bits));
+      |                                                ^
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:870:29: Operator ASSIGN expects 65 bits on the Assign RHS, but Assign RHS's AND generates 66 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  870 |             new_length_over = (new_length_over & (~lmsk_exp_bits));
+      |                             ^
+%Warning-WIDTHEXPAND: ../../../core/include/cva6_cheri_pkg.sv:871:39: Operator ASSIGN expects 66 bits on the Assign RHS, but Assign RHS's VARREF 'new_length_over' generates 65 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  871 |             if (lost_lsb_len) new_len = new_length_over;
+      |                                       ^
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:872:21: Operator ASSIGN expects 64 bits on the Assign RHS, but Assign RHS's COND generates 66 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  872 |             len_msk = (is_len_max && lost_lsb_top) ?  (-1 << (exp + 4)) : ~lmsk_exp_bits;
+      |                     ^
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:1054:44: Operator ASSIGN expects 9 bits on the Assign RHS, but Assign RHS's SHIFTR generates 14 bits.
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+ 1054 |         hcmw_t top_bits =  bounds.top_bits >> CAP_E_HALF_WIDTH;
+      |                                            ^~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:937:13: Operator PATMEMBER expects 14 bits on the Pattern value, but Pattern value's SHIFTR generates 64 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  937 |             addr_mid:  cap.addr >> bounds.exp
+      |             ^~~~~~~~
+%Warning-WIDTHTRUNC: ../../../core/include/cva6_cheri_pkg.sv:955:27: Operator ASSIGN expects 14 bits on the Assign RHS, but Assign RHS's SHIFTR generates 64 bits.
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  955 |         cap_pcc.addr_mid  = cap.addr >> cap.bounds.exp;
+      |                           ^
+%Warning-WIDTHEXPAND: ../../../core/branch_unit.sv:67:42: Operator ASSIGN expects 250 bits on the Assign RHS, but Assign RHS's VARREF 'REG_NULL_CAP' generates 149 bits.
+                                                        : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   67 |         resolved_branch_o.target_address = REG_NULL_CAP;
+      |                                          ^
+%Warning-WIDTHEXPAND: ../../../core/branch_unit.sv:186:65: Operator GT expects 65 bits on the LHS, but LHS's UNSIGNED generates 64 bits.
+                                                         : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  186 |             if(pcc_i.addr < pcc_i.base || $unsigned(pcc_i.addr) > pcc_i.top) begin
+      |                                                                 ^
+%Warning-WIDTHTRUNC: /home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_branch_unit//hdl/cheri_branch_unit_testharness.sv:163:51: Operator ASSIGN expects 64 bits on the Assign RHS, but Assign RHS's SEL generates 65 bits.
+                                                                                                                                                              : ... In instance cheri_branch_unit_testharness
+  163 |       resolved_branch_target_address_top_o        = resolved_branch.target_address.top;
+      |                                                   ^
+%Warning-UNUSEDSIGNAL: /home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_branch_unit//hdl/cheri_branch_unit_testharness.sv:80:19: Bits of signal are not used: 'result'[83:70]
+                                                                                                                                                               : ... In instance cheri_branch_unit_testharness
+   80 |   cap_reg_t       result;
+      |                   ^~~~~~
+%Warning-UNUSEDSIGNAL: /home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_branch_unit//hdl/cheri_branch_unit_testharness.sv:81:19: Bits of signal are not used: 'ex'[129:1]
+                                                                                                                                                               : ... In instance cheri_branch_unit_testharness
+   81 |   exception_t     ex;
+      |                   ^~
+%Warning-UNDRIVEN: /home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_branch_unit//hdl/cheri_branch_unit_testharness.sv:82:19: Bits of signal are not driven: 'fu_data'[2:0]
+                                                                                                                                                           : ... In instance cheri_branch_unit_testharness
+   82 |   fu_data_t       fu_data;
+      |                   ^~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:41:16: Parameter is not used: 'GPLEN'
+                                                              : ... In instance cheri_branch_unit_testharness
+   41 |     localparam GPLEN      = (XLEN == 32) ? 34 : 41;     
+      |                ^~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:49:16: Parameter is not used: 'GPPNW'
+                                                              : ... In instance cheri_branch_unit_testharness
+   49 |     localparam GPPNW      = (XLEN == 32) ? 22 : 29;
+      |                ^~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:51:16: Parameter is not used: 'SV'
+                                                              : ... In instance cheri_branch_unit_testharness
+   51 |     localparam SV         = (MODE_SV == ModeSv32) ? 32 : 39;
+      |                ^~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:52:16: Parameter is not used: 'SVX'
+                                                              : ... In instance cheri_branch_unit_testharness
+   52 |     localparam SVX        = (MODE_SV == ModeSv32) ? 34 : 41;
+      |                ^~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:53:16: Parameter is not used: 'VPN2'
+                                                              : ... In instance cheri_branch_unit_testharness
+   53 |     localparam VPN2       = (VLEN-31 < 8) ? VLEN-31 : 8;
+      |                ^~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:54:16: Parameter is not used: 'GPPN2'
+                                                              : ... In instance cheri_branch_unit_testharness
+   54 |     localparam GPPN2      = (XLEN == 32) ? riscv::VLEN-33 : 10;
+      |                ^~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:252:16: Parameter is not used: 'OpcodeLoad'
+                                                               : ... In instance cheri_branch_unit_testharness
+  252 |     localparam OpcodeLoad      = 7'b00_000_11;
+      |                ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:253:16: Parameter is not used: 'OpcodeLoadFp'
+                                                               : ... In instance cheri_branch_unit_testharness
+  253 |     localparam OpcodeLoadFp    = 7'b00_001_11;
+      |                ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:254:16: Parameter is not used: 'OpcodeCustom0'
+                                                               : ... In instance cheri_branch_unit_testharness
+  254 |     localparam OpcodeCustom0   = 7'b00_010_11;
+      |                ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:255:16: Parameter is not used: 'OpcodeMiscMem'
+                                                               : ... In instance cheri_branch_unit_testharness
+  255 |     localparam OpcodeMiscMem   = 7'b00_011_11;
+      |                ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:256:16: Parameter is not used: 'OpcodeOpImm'
+                                                               : ... In instance cheri_branch_unit_testharness
+  256 |     localparam OpcodeOpImm     = 7'b00_100_11;
+      |                ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:257:16: Parameter is not used: 'OpcodeAuipc'
+                                                               : ... In instance cheri_branch_unit_testharness
+  257 |     localparam OpcodeAuipc     = 7'b00_101_11;
+      |                ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:258:16: Parameter is not used: 'OpcodeOpImm32'
+                                                               : ... In instance cheri_branch_unit_testharness
+  258 |     localparam OpcodeOpImm32   = 7'b00_110_11;
+      |                ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:260:16: Parameter is not used: 'OpcodeStore'
+                                                               : ... In instance cheri_branch_unit_testharness
+  260 |     localparam OpcodeStore     = 7'b01_000_11;
+      |                ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:261:16: Parameter is not used: 'OpcodeStoreFp'
+                                                               : ... In instance cheri_branch_unit_testharness
+  261 |     localparam OpcodeStoreFp   = 7'b01_001_11;
+      |                ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:262:16: Parameter is not used: 'OpcodeCustom1'
+                                                               : ... In instance cheri_branch_unit_testharness
+  262 |     localparam OpcodeCustom1   = 7'b01_010_11;
+      |                ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:263:16: Parameter is not used: 'OpcodeAmo'
+                                                               : ... In instance cheri_branch_unit_testharness
+  263 |     localparam OpcodeAmo       = 7'b01_011_11;
+      |                ^~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:264:16: Parameter is not used: 'OpcodeOp'
+                                                               : ... In instance cheri_branch_unit_testharness
+  264 |     localparam OpcodeOp        = 7'b01_100_11;
+      |                ^~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:265:16: Parameter is not used: 'OpcodeLui'
+                                                               : ... In instance cheri_branch_unit_testharness
+  265 |     localparam OpcodeLui       = 7'b01_101_11;
+      |                ^~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:266:16: Parameter is not used: 'OpcodeOp32'
+                                                               : ... In instance cheri_branch_unit_testharness
+  266 |     localparam OpcodeOp32      = 7'b01_110_11;
+      |                ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:268:16: Parameter is not used: 'OpcodeMadd'
+                                                               : ... In instance cheri_branch_unit_testharness
+  268 |     localparam OpcodeMadd      = 7'b10_000_11;
+      |                ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:269:16: Parameter is not used: 'OpcodeMsub'
+                                                               : ... In instance cheri_branch_unit_testharness
+  269 |     localparam OpcodeMsub      = 7'b10_001_11;
+      |                ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:270:16: Parameter is not used: 'OpcodeNmsub'
+                                                               : ... In instance cheri_branch_unit_testharness
+  270 |     localparam OpcodeNmsub     = 7'b10_010_11;
+      |                ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:271:16: Parameter is not used: 'OpcodeNmadd'
+                                                               : ... In instance cheri_branch_unit_testharness
+  271 |     localparam OpcodeNmadd     = 7'b10_011_11;
+      |                ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:272:16: Parameter is not used: 'OpcodeOpFp'
+                                                               : ... In instance cheri_branch_unit_testharness
+  272 |     localparam OpcodeOpFp      = 7'b10_100_11;
+      |                ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:273:16: Parameter is not used: 'OpcodeRsrvd1'
+                                                               : ... In instance cheri_branch_unit_testharness
+  273 |     localparam OpcodeRsrvd1    = 7'b10_101_11;
+      |                ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:274:16: Parameter is not used: 'OpcodeCustom2'
+                                                               : ... In instance cheri_branch_unit_testharness
+  274 |     localparam OpcodeCustom2   = 7'b10_110_11;
+      |                ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:276:16: Parameter is not used: 'OpcodeBranch'
+                                                               : ... In instance cheri_branch_unit_testharness
+  276 |     localparam OpcodeBranch    = 7'b11_000_11;
+      |                ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:277:16: Parameter is not used: 'OpcodeJalr'
+                                                               : ... In instance cheri_branch_unit_testharness
+  277 |     localparam OpcodeJalr      = 7'b11_001_11;
+      |                ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:278:16: Parameter is not used: 'OpcodeRsrvd2'
+                                                               : ... In instance cheri_branch_unit_testharness
+  278 |     localparam OpcodeRsrvd2    = 7'b11_010_11;
+      |                ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:279:16: Parameter is not used: 'OpcodeJal'
+                                                               : ... In instance cheri_branch_unit_testharness
+  279 |     localparam OpcodeJal       = 7'b11_011_11;
+      |                ^~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:280:16: Parameter is not used: 'OpcodeSystem'
+                                                               : ... In instance cheri_branch_unit_testharness
+  280 |     localparam OpcodeSystem    = 7'b11_100_11;
+      |                ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:281:16: Parameter is not used: 'OpcodeRsrvd3'
+                                                               : ... In instance cheri_branch_unit_testharness
+  281 |     localparam OpcodeRsrvd3    = 7'b11_101_11;
+      |                ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:282:16: Parameter is not used: 'OpcodeCustom3'
+                                                               : ... In instance cheri_branch_unit_testharness
+  282 |     localparam OpcodeCustom3   = 7'b11_110_11;
+      |                ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:283:16: Parameter is not used: 'OpcodeCheri'
+                                                               : ... In instance cheri_branch_unit_testharness
+  283 |     localparam OpcodeCheri     = 7'b10_110_11;
+      |                ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:287:16: Parameter is not used: 'OpcodeC0'
+                                                               : ... In instance cheri_branch_unit_testharness
+  287 |     localparam OpcodeC0             = 2'b00;
+      |                ^~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:288:16: Parameter is not used: 'OpcodeC0Addi4spn'
+                                                               : ... In instance cheri_branch_unit_testharness
+  288 |     localparam OpcodeC0Addi4spn     = 3'b000;
+      |                ^~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:289:16: Parameter is not used: 'OpcodeC0Fld'
+                                                               : ... In instance cheri_branch_unit_testharness
+  289 |     localparam OpcodeC0Fld          = 3'b001;
+      |                ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:290:16: Parameter is not used: 'OpcodeC0Lw'
+                                                               : ... In instance cheri_branch_unit_testharness
+  290 |     localparam OpcodeC0Lw           = 3'b010;
+      |                ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:291:16: Parameter is not used: 'OpcodeC0Ld'
+                                                               : ... In instance cheri_branch_unit_testharness
+  291 |     localparam OpcodeC0Ld           = 3'b011;
+      |                ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:292:16: Parameter is not used: 'OpcodeC0Rsrvd'
+                                                               : ... In instance cheri_branch_unit_testharness
+  292 |     localparam OpcodeC0Rsrvd        = 3'b100;
+      |                ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:293:16: Parameter is not used: 'OpcodeC0Fsd'
+                                                               : ... In instance cheri_branch_unit_testharness
+  293 |     localparam OpcodeC0Fsd          = 3'b101;
+      |                ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:294:16: Parameter is not used: 'OpcodeC0Sw'
+                                                               : ... In instance cheri_branch_unit_testharness
+  294 |     localparam OpcodeC0Sw           = 3'b110;
+      |                ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:295:16: Parameter is not used: 'OpcodeC0Sd'
+                                                               : ... In instance cheri_branch_unit_testharness
+  295 |     localparam OpcodeC0Sd           = 3'b111;
+      |                ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:297:16: Parameter is not used: 'OpcodeC1'
+                                                               : ... In instance cheri_branch_unit_testharness
+  297 |     localparam OpcodeC1             = 2'b01;
+      |                ^~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:298:16: Parameter is not used: 'OpcodeC1Addi'
+                                                               : ... In instance cheri_branch_unit_testharness
+  298 |     localparam OpcodeC1Addi         = 3'b000;
+      |                ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:299:16: Parameter is not used: 'OpcodeC1Addiw'
+                                                               : ... In instance cheri_branch_unit_testharness
+  299 |     localparam OpcodeC1Addiw        = 3'b001;  
+      |                ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:300:16: Parameter is not used: 'OpcodeC1Jal'
+                                                               : ... In instance cheri_branch_unit_testharness
+  300 |     localparam OpcodeC1Jal          = 3'b001;  
+      |                ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:301:16: Parameter is not used: 'OpcodeC1Li'
+                                                               : ... In instance cheri_branch_unit_testharness
+  301 |     localparam OpcodeC1Li           = 3'b010;
+      |                ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:302:16: Parameter is not used: 'OpcodeC1LuiAddi16sp'
+                                                               : ... In instance cheri_branch_unit_testharness
+  302 |     localparam OpcodeC1LuiAddi16sp  = 3'b011;
+      |                ^~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:303:16: Parameter is not used: 'OpcodeC1MiscAlu'
+                                                               : ... In instance cheri_branch_unit_testharness
+  303 |     localparam OpcodeC1MiscAlu      = 3'b100;
+      |                ^~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:304:16: Parameter is not used: 'OpcodeC1J'
+                                                               : ... In instance cheri_branch_unit_testharness
+  304 |     localparam OpcodeC1J            = 3'b101;
+      |                ^~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:305:16: Parameter is not used: 'OpcodeC1Beqz'
+                                                               : ... In instance cheri_branch_unit_testharness
+  305 |     localparam OpcodeC1Beqz         = 3'b110;
+      |                ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:306:16: Parameter is not used: 'OpcodeC1Bnez'
+                                                               : ... In instance cheri_branch_unit_testharness
+  306 |     localparam OpcodeC1Bnez         = 3'b111;
+      |                ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:308:16: Parameter is not used: 'OpcodeC2'
+                                                               : ... In instance cheri_branch_unit_testharness
+  308 |     localparam OpcodeC2             = 2'b10;
+      |                ^~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:309:16: Parameter is not used: 'OpcodeC2Slli'
+                                                               : ... In instance cheri_branch_unit_testharness
+  309 |     localparam OpcodeC2Slli         = 3'b000;
+      |                ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:310:16: Parameter is not used: 'OpcodeC2Fldsp'
+                                                               : ... In instance cheri_branch_unit_testharness
+  310 |     localparam OpcodeC2Fldsp        = 3'b001;
+      |                ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:311:16: Parameter is not used: 'OpcodeC2Lwsp'
+                                                               : ... In instance cheri_branch_unit_testharness
+  311 |     localparam OpcodeC2Lwsp         = 3'b010;
+      |                ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:312:16: Parameter is not used: 'OpcodeC2Ldsp'
+                                                               : ... In instance cheri_branch_unit_testharness
+  312 |     localparam OpcodeC2Ldsp         = 3'b011;
+      |                ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:313:16: Parameter is not used: 'OpcodeC2JalrMvAdd'
+                                                               : ... In instance cheri_branch_unit_testharness
+  313 |     localparam OpcodeC2JalrMvAdd    = 3'b100;
+      |                ^~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:314:16: Parameter is not used: 'OpcodeC2Fsdsp'
+                                                               : ... In instance cheri_branch_unit_testharness
+  314 |     localparam OpcodeC2Fsdsp        = 3'b101;
+      |                ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:315:16: Parameter is not used: 'OpcodeC2Swsp'
+                                                               : ... In instance cheri_branch_unit_testharness
+  315 |     localparam OpcodeC2Swsp         = 3'b110;
+      |                ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:316:16: Parameter is not used: 'OpcodeC2Sdsp'
+                                                               : ... In instance cheri_branch_unit_testharness
+  316 |     localparam OpcodeC2Sdsp         = 3'b111;
+      |                ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:399:33: Parameter is not used: 'INSTR_ACCESS_FAULT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  399 |     localparam logic [XLEN-1:0] INSTR_ACCESS_FAULT    = 1;   
+      |                                 ^~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:400:33: Parameter is not used: 'ILLEGAL_INSTR'
+                                                               : ... In instance cheri_branch_unit_testharness
+  400 |     localparam logic [XLEN-1:0] ILLEGAL_INSTR         = 2;
+      |                                 ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:401:33: Parameter is not used: 'BREAKPOINT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  401 |     localparam logic [XLEN-1:0] BREAKPOINT            = 3;
+      |                                 ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:402:33: Parameter is not used: 'LD_ADDR_MISALIGNED'
+                                                               : ... In instance cheri_branch_unit_testharness
+  402 |     localparam logic [XLEN-1:0] LD_ADDR_MISALIGNED    = 4;
+      |                                 ^~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:403:33: Parameter is not used: 'LD_ACCESS_FAULT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  403 |     localparam logic [XLEN-1:0] LD_ACCESS_FAULT       = 5;   
+      |                                 ^~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:404:33: Parameter is not used: 'ST_ADDR_MISALIGNED'
+                                                               : ... In instance cheri_branch_unit_testharness
+  404 |     localparam logic [XLEN-1:0] ST_ADDR_MISALIGNED    = 6;
+      |                                 ^~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:405:33: Parameter is not used: 'ST_ACCESS_FAULT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  405 |     localparam logic [XLEN-1:0] ST_ACCESS_FAULT       = 7;   
+      |                                 ^~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:406:33: Parameter is not used: 'ENV_CALL_UMODE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  406 |     localparam logic [XLEN-1:0] ENV_CALL_UMODE        = 8;   
+      |                                 ^~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:407:33: Parameter is not used: 'ENV_CALL_SMODE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  407 |     localparam logic [XLEN-1:0] ENV_CALL_SMODE        = 9;   
+      |                                 ^~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:408:33: Parameter is not used: 'ENV_CALL_VSMODE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  408 |     localparam logic [XLEN-1:0] ENV_CALL_VSMODE       = 10;  
+      |                                 ^~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:409:33: Parameter is not used: 'ENV_CALL_MMODE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  409 |     localparam logic [XLEN-1:0] ENV_CALL_MMODE        = 11;  
+      |                                 ^~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:410:33: Parameter is not used: 'INSTR_PAGE_FAULT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  410 |     localparam logic [XLEN-1:0] INSTR_PAGE_FAULT      = 12;  
+      |                                 ^~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:411:33: Parameter is not used: 'LOAD_PAGE_FAULT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  411 |     localparam logic [XLEN-1:0] LOAD_PAGE_FAULT       = 13;  
+      |                                 ^~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:412:33: Parameter is not used: 'STORE_PAGE_FAULT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  412 |     localparam logic [XLEN-1:0] STORE_PAGE_FAULT      = 15;  
+      |                                 ^~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:413:33: Parameter is not used: 'INSTR_GUEST_PAGE_FAULT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  413 |     localparam logic [XLEN-1:0] INSTR_GUEST_PAGE_FAULT= 20;  
+      |                                 ^~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:414:33: Parameter is not used: 'LOAD_GUEST_PAGE_FAULT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  414 |     localparam logic [XLEN-1:0] LOAD_GUEST_PAGE_FAULT = 21;  
+      |                                 ^~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:415:33: Parameter is not used: 'VIRTUAL_INSTRUCTION'
+                                                               : ... In instance cheri_branch_unit_testharness
+  415 |     localparam logic [XLEN-1:0] VIRTUAL_INSTRUCTION   = 22;  
+      |                                 ^~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:416:33: Parameter is not used: 'STORE_GUEST_PAGE_FAULT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  416 |     localparam logic [XLEN-1:0] STORE_GUEST_PAGE_FAULT= 23;  
+      |                                 ^~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:417:33: Parameter is not used: 'DEBUG_REQUEST'
+                                                               : ... In instance cheri_branch_unit_testharness
+  417 |     localparam logic [XLEN-1:0] DEBUG_REQUEST         = 24;  
+      |                                 ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:430:33: Parameter is not used: 'MIP_SSIP'
+                                                               : ... In instance cheri_branch_unit_testharness
+  430 |     localparam logic [XLEN-1:0] MIP_SSIP  = 1 << IRQ_S_SOFT;
+      |                                 ^~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:432:33: Parameter is not used: 'MIP_MSIP'
+                                                               : ... In instance cheri_branch_unit_testharness
+  432 |     localparam logic [XLEN-1:0] MIP_MSIP  = 1 << IRQ_M_SOFT;
+      |                                 ^~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:433:33: Parameter is not used: 'MIP_STIP'
+                                                               : ... In instance cheri_branch_unit_testharness
+  433 |     localparam logic [XLEN-1:0] MIP_STIP  = 1 << IRQ_S_TIMER;
+      |                                 ^~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:435:33: Parameter is not used: 'MIP_MTIP'
+                                                               : ... In instance cheri_branch_unit_testharness
+  435 |     localparam logic [XLEN-1:0] MIP_MTIP  = 1 << IRQ_M_TIMER;
+      |                                 ^~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:436:33: Parameter is not used: 'MIP_SEIP'
+                                                               : ... In instance cheri_branch_unit_testharness
+  436 |     localparam logic [XLEN-1:0] MIP_SEIP  = 1 << IRQ_S_EXT;
+      |                                 ^~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:438:33: Parameter is not used: 'MIP_MEIP'
+                                                               : ... In instance cheri_branch_unit_testharness
+  438 |     localparam logic [XLEN-1:0] MIP_MEIP  = 1 << IRQ_M_EXT;
+      |                                 ^~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:439:33: Parameter is not used: 'MIP_SGEIP'
+                                                               : ... In instance cheri_branch_unit_testharness
+  439 |     localparam logic [XLEN-1:0] MIP_SGEIP = 1 << IRQ_HS_EXT;
+      |                                 ^~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:441:33: Parameter is not used: 'S_SW_INTERRUPT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  441 |     localparam logic [XLEN-1:0] S_SW_INTERRUPT     = (1 << (XLEN-1)) | IRQ_S_SOFT;
+      |                                 ^~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:442:33: Parameter is not used: 'VS_SW_INTERRUPT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  442 |     localparam logic [XLEN-1:0] VS_SW_INTERRUPT    = (1 << (XLEN-1)) | IRQ_VS_SOFT;
+      |                                 ^~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:443:33: Parameter is not used: 'M_SW_INTERRUPT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  443 |     localparam logic [XLEN-1:0] M_SW_INTERRUPT     = (1 << (XLEN-1)) | IRQ_M_SOFT;
+      |                                 ^~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:444:33: Parameter is not used: 'S_TIMER_INTERRUPT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  444 |     localparam logic [XLEN-1:0] S_TIMER_INTERRUPT  = (1 << (XLEN-1)) | IRQ_S_TIMER;
+      |                                 ^~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:445:33: Parameter is not used: 'VS_TIMER_INTERRUPT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  445 |     localparam logic [XLEN-1:0] VS_TIMER_INTERRUPT = (1 << (XLEN-1)) | IRQ_VS_TIMER;
+      |                                 ^~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:446:33: Parameter is not used: 'M_TIMER_INTERRUPT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  446 |     localparam logic [XLEN-1:0] M_TIMER_INTERRUPT  = (1 << (XLEN-1)) | IRQ_M_TIMER;
+      |                                 ^~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:447:33: Parameter is not used: 'S_EXT_INTERRUPT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  447 |     localparam logic [XLEN-1:0] S_EXT_INTERRUPT    = (1 << (XLEN-1)) | IRQ_S_EXT;
+      |                                 ^~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:448:33: Parameter is not used: 'VS_EXT_INTERRUPT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  448 |     localparam logic [XLEN-1:0] VS_EXT_INTERRUPT   = (1 << (XLEN-1)) | IRQ_VS_EXT;
+      |                                 ^~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:449:33: Parameter is not used: 'M_EXT_INTERRUPT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  449 |     localparam logic [XLEN-1:0] M_EXT_INTERRUPT    = (1 << (XLEN-1)) | IRQ_M_EXT;
+      |                                 ^~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:450:33: Parameter is not used: 'HS_EXT_INTERRUPT'
+                                                               : ... In instance cheri_branch_unit_testharness
+  450 |     localparam logic [XLEN-1:0] HS_EXT_INTERRUPT   = (1 << (XLEN-1)) | IRQ_HS_EXT;
+      |                                 ^~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:455:33: Parameter is not used: 'READ_32_PSEUDOINSTRUCTION'
+                                                               : ... In instance cheri_branch_unit_testharness
+  455 |     localparam logic [XLEN-1:0] READ_32_PSEUDOINSTRUCTION  = 32'h00002000;
+      |                                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:456:33: Parameter is not used: 'WRITE_32_PSEUDOINSTRUCTION'
+                                                               : ... In instance cheri_branch_unit_testharness
+  456 |     localparam logic [XLEN-1:0] WRITE_32_PSEUDOINSTRUCTION = 32'h00002020;
+      |                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:457:33: Parameter is not used: 'READ_64_PSEUDOINSTRUCTION'
+                                                               : ... In instance cheri_branch_unit_testharness
+  457 |     localparam logic [XLEN-1:0] READ_64_PSEUDOINSTRUCTION  = 64'h00003000;
+      |                                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:458:33: Parameter is not used: 'WRITE_64_PSEUDOINSTRUCTION'
+                                                               : ... In instance cheri_branch_unit_testharness
+  458 |     localparam logic [XLEN-1:0] WRITE_64_PSEUDOINSTRUCTION = 64'h00003020;
+      |                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:654:29: Parameter is not used: 'HSTATUS_VGEIN'
+                                                               : ... In instance cheri_branch_unit_testharness
+  654 |     localparam logic [63:0] HSTATUS_VGEIN= 'h0003F000;
+      |                             ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:658:29: Parameter is not used: 'HSTATUS_VSXL'
+                                                               : ... In instance cheri_branch_unit_testharness
+  658 |     localparam logic [63:0] HSTATUS_VSXL = 64'h0000000300000000;
+      |                             ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:660:29: Parameter is not used: 'MSTATUS_UIE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  660 |     localparam logic [63:0] MSTATUS_UIE  = 'h00000001;
+      |                             ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:661:29: Parameter is not used: 'MSTATUS_SIE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  661 |     localparam logic [63:0] MSTATUS_SIE  = 'h00000002;
+      |                             ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:662:29: Parameter is not used: 'MSTATUS_HIE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  662 |     localparam logic [63:0] MSTATUS_HIE  = 'h00000004;
+      |                             ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:663:29: Parameter is not used: 'MSTATUS_MIE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  663 |     localparam logic [63:0] MSTATUS_MIE  = 'h00000008;
+      |                             ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:664:29: Parameter is not used: 'MSTATUS_UPIE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  664 |     localparam logic [63:0] MSTATUS_UPIE = 'h00000010;
+      |                             ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:665:29: Parameter is not used: 'MSTATUS_SPIE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  665 |     localparam logic [63:0] MSTATUS_SPIE = 'h00000020;
+      |                             ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:666:29: Parameter is not used: 'MSTATUS_HPIE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  666 |     localparam logic [63:0] MSTATUS_HPIE = 'h00000040;
+      |                             ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:667:29: Parameter is not used: 'MSTATUS_MPIE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  667 |     localparam logic [63:0] MSTATUS_MPIE = 'h00000080;
+      |                             ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:668:29: Parameter is not used: 'MSTATUS_SPP'
+                                                               : ... In instance cheri_branch_unit_testharness
+  668 |     localparam logic [63:0] MSTATUS_SPP  = 'h00000100;
+      |                             ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:669:29: Parameter is not used: 'MSTATUS_HPP'
+                                                               : ... In instance cheri_branch_unit_testharness
+  669 |     localparam logic [63:0] MSTATUS_HPP  = 'h00000600;
+      |                             ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:670:29: Parameter is not used: 'MSTATUS_MPP'
+                                                               : ... In instance cheri_branch_unit_testharness
+  670 |     localparam logic [63:0] MSTATUS_MPP  = 'h00001800;
+      |                             ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:671:29: Parameter is not used: 'MSTATUS_FS'
+                                                               : ... In instance cheri_branch_unit_testharness
+  671 |     localparam logic [63:0] MSTATUS_FS   = 'h00006000;
+      |                             ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:672:29: Parameter is not used: 'MSTATUS_XS'
+                                                               : ... In instance cheri_branch_unit_testharness
+  672 |     localparam logic [63:0] MSTATUS_XS   = 'h00018000;
+      |                             ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:673:29: Parameter is not used: 'MSTATUS_MPRV'
+                                                               : ... In instance cheri_branch_unit_testharness
+  673 |     localparam logic [63:0] MSTATUS_MPRV = 'h00020000;
+      |                             ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:674:29: Parameter is not used: 'MSTATUS_SUM'
+                                                               : ... In instance cheri_branch_unit_testharness
+  674 |     localparam logic [63:0] MSTATUS_SUM  = 'h00040000;
+      |                             ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:675:29: Parameter is not used: 'MSTATUS_MXR'
+                                                               : ... In instance cheri_branch_unit_testharness
+  675 |     localparam logic [63:0] MSTATUS_MXR  = 'h00080000;
+      |                             ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:676:29: Parameter is not used: 'MSTATUS_TVM'
+                                                               : ... In instance cheri_branch_unit_testharness
+  676 |     localparam logic [63:0] MSTATUS_TVM  = 'h00100000;
+      |                             ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:677:29: Parameter is not used: 'MSTATUS_TW'
+                                                               : ... In instance cheri_branch_unit_testharness
+  677 |     localparam logic [63:0] MSTATUS_TW   = 'h00200000;
+      |                             ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:678:29: Parameter is not used: 'MSTATUS_TSR'
+                                                               : ... In instance cheri_branch_unit_testharness
+  678 |     localparam logic [63:0] MSTATUS_TSR  = 'h00400000;
+      |                             ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:679:29: Parameter is not used: 'MSTATUS_UXL'
+                                                               : ... In instance cheri_branch_unit_testharness
+  679 |     localparam logic [63:0] MSTATUS_UXL  = {30'h0000000, IS_XLEN64, IS_XLEN64, 32'h00000000};
+      |                             ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:680:29: Parameter is not used: 'MSTATUS_SXL'
+                                                               : ... In instance cheri_branch_unit_testharness
+  680 |     localparam logic [63:0] MSTATUS_SXL  = {28'h0000000, IS_XLEN64, IS_XLEN64, 34'h00000000};
+      |                             ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:681:29: Parameter is not used: 'MSTATUS_SD'
+                                                               : ... In instance cheri_branch_unit_testharness
+  681 |     localparam logic [63:0] MSTATUS_SD   = {IS_XLEN64, 31'h00000000, ~IS_XLEN64, 31'h00000000};
+      |                             ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:684:29: Parameter is not used: 'MENVCFG_CBIE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  684 |     localparam logic [63:0] MENVCFG_CBIE  = 'h00000030;
+      |                             ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:685:29: Parameter is not used: 'MENVCFG_CBFE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  685 |     localparam logic [63:0] MENVCFG_CBFE  = 'h00000040;
+      |                             ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:686:29: Parameter is not used: 'MENVCFG_CBZE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  686 |     localparam logic [63:0] MENVCFG_CBZE  = 'h00000080;
+      |                             ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:687:29: Parameter is not used: 'MENVCFG_PBMTE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  687 |     localparam logic [63:0] MENVCFG_PBMTE = 64'h4000000000000000;
+      |                             ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/riscv_pkg.sv:688:29: Parameter is not used: 'MENVCFG_STCE'
+                                                               : ... In instance cheri_branch_unit_testharness
+  688 |     localparam logic [63:0] MENVCFG_STCE  = 64'h8000000000000000;
+      |                             ^~~~~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/riscv_pkg.sv:773:70: Bits of signal are not used: 'imm'[0]
+                                                                : ... In instance cheri_branch_unit_testharness
+  773 |     function automatic logic [31:0] jal (logic[4:0] rd, logic [20:0] imm);
+      |                                                                      ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/riscv_pkg.sv:803:72: Bits of signal are not used: 'imm'[0]
+                                                                : ... In instance cheri_branch_unit_testharness
+  803 |     function automatic logic [31:0] auipc (logic[4:0] rd, logic [20:0] imm);
+      |                                                                        ^~~
+%Warning-UNUSEDPARAM: ../../riscv-dbg/src/dm_pkg.sv:20:26: Parameter is not used: 'DbgVersion013'
+                                                         : ... In instance cheri_branch_unit_testharness
+   20 |   localparam logic [3:0] DbgVersion013 = 4'h2;
+      |                          ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../riscv-dbg/src/dm_pkg.sv:22:26: Parameter is not used: 'ProgBufSize'
+                                                         : ... In instance cheri_branch_unit_testharness
+   22 |   localparam logic [4:0] ProgBufSize   = 5'h8;
+      |                          ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../riscv-dbg/src/dm_pkg.sv:29:27: Parameter is not used: 'ResumeAddress'
+                                                         : ... In instance cheri_branch_unit_testharness
+   29 |   localparam logic [63:0] ResumeAddress = HaltAddress + 4;
+      |                           ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../riscv-dbg/src/dm_pkg.sv:30:27: Parameter is not used: 'ExceptionAddress'
+                                                         : ... In instance cheri_branch_unit_testharness
+   30 |   localparam logic [63:0] ExceptionAddress = HaltAddress + 8;
+      |                           ^~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../riscv-dbg/src/dm_pkg.sv:96:26: Parameter is not used: 'CauseBreakpoint'
+                                                         : ... In instance cheri_branch_unit_testharness
+   96 |   localparam logic [2:0] CauseBreakpoint = 3'h1;
+      |                          ^~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../riscv-dbg/src/dm_pkg.sv:97:26: Parameter is not used: 'CauseTrigger'
+                                                         : ... In instance cheri_branch_unit_testharness
+   97 |   localparam logic [2:0] CauseTrigger    = 3'h2;
+      |                          ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../riscv-dbg/src/dm_pkg.sv:98:26: Parameter is not used: 'CauseRequest'
+                                                         : ... In instance cheri_branch_unit_testharness
+   98 |   localparam logic [2:0] CauseRequest    = 3'h3;
+      |                          ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../riscv-dbg/src/dm_pkg.sv:99:26: Parameter is not used: 'CauseSingleStep'
+                                                         : ... In instance cheri_branch_unit_testharness
+   99 |   localparam logic [2:0] CauseSingleStep = 3'h4;
+      |                          ^~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../riscv-dbg/src/dm_pkg.sv:218:26: Parameter is not used: 'DTM_SUCCESS'
+                                                          : ... In instance cheri_branch_unit_testharness
+  218 |   localparam logic [1:0] DTM_SUCCESS = 2'h0;
+      |                          ^~~~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../riscv-dbg/src/dm_pkg.sv:328:53: Bits of signal are not used: 'imm'[0]
+                                                           : ... In instance cheri_branch_unit_testharness
+  328 |                                        logic [20:0] imm);
+      |                                                     ^~~
+%Warning-UNUSEDSIGNAL: ../../riscv-dbg/src/dm_pkg.sv:370:55: Bits of signal are not used: 'imm'[0]
+                                                           : ... In instance cheri_branch_unit_testharness
+  370 |                                          logic [20:0] imm);
+      |                                                       ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/branch_unit.sv:16:39: Signal is not used: 'clk_i'
+                                                         : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   16 |     input  logic                      clk_i,
+      |                                       ^~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/branch_unit.sv:17:39: Signal is not used: 'rst_ni'
+                                                         : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   17 |     input  logic                      rst_ni,
+      |                                       ^~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/branch_unit.sv:18:39: Signal is not used: 'debug_mode_i'
+                                                         : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   18 |     input  logic                      debug_mode_i,
+      |                                       ^~~~~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/branch_unit.sv:19:39: Bits of signal are not used: 'fu_data_i'[377:373,2:0]
+                                                         : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   19 |     input  ariane_pkg::fu_data_t      fu_data_i,
+      |                                       ^~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/branch_unit.sv:22:39: Signal is not used: 'fu_valid_i'
+                                                         : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   22 |     input  logic                      fu_valid_i,              
+      |                                       ^~~~~~~~~~
+%Warning-UNDRIVEN: ../../../core/branch_unit.sv:127:46: Bits of signal are not driven: 'cheri_tval'[63:11]
+                                                      : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  127 |         automatic cva6_cheri_pkg::cap_tval_t cheri_tval;
+      |                                              ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:25:16: Parameter is not used: 'CAP_UPERMS_SHIFT'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   25 |     localparam CAP_UPERMS_SHIFT     = (riscv::XLEN == 64) ? 15 : 0;
+      |                ^~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:26:16: Parameter is not used: 'CAP_HPERMS_WIDTH'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   26 |     localparam CAP_HPERMS_WIDTH     = 12;
+      |                ^~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:27:16: Parameter is not used: 'CAP_FLAGS_WIDTH'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   27 |     localparam CAP_FLAGS_WIDTH      = 1;
+      |                ^~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:35:16: Parameter is not used: 'CAP_EXP_NUM'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   35 |     localparam CAP_EXP_NUM          = 29;
+      |                ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:59:40: Parameter is not used: 'CAP_LOAD_PAGE_FAULT'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   59 |     localparam logic [riscv::XLEN-1:0] CAP_LOAD_PAGE_FAULT       = 26;
+      |                                        ^~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:60:40: Parameter is not used: 'CAP_STORE_AMO_PAGE_FAULT'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   60 |     localparam logic [riscv::XLEN-1:0] CAP_STORE_AMO_PAGE_FAULT  = 27;
+      |                                        ^~~~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:68:28: Parameter is not used: 'CAP_TYPE_VIOLATION'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   68 |     localparam logic [4:0] CAP_TYPE_VIOLATION              = 4;
+      |                            ^~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:69:28: Parameter is not used: 'CAP_USER_DEF_PERM_VIOLATION'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   69 |     localparam logic [4:0] CAP_USER_DEF_PERM_VIOLATION     = 8;
+      |                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:70:28: Parameter is not used: 'CAP_REPRE_VIOLATION'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   70 |     localparam logic [4:0] CAP_REPRE_VIOLATION             = 10;
+      |                            ^~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:72:28: Parameter is not used: 'CAP_GLOBAL_VIOLATION'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   72 |     localparam logic [4:0] CAP_GLOBAL_VIOLATION            = 16;
+      |                            ^~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:74:28: Parameter is not used: 'CAP_PERM_LD_VIOLATION'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   74 |     localparam logic [4:0] CAP_PERM_LD_VIOLATION           = 18;
+      |                            ^~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:75:28: Parameter is not used: 'CAP_PERM_ST_VIOLATION'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   75 |     localparam logic [4:0] CAP_PERM_ST_VIOLATION           = 19;
+      |                            ^~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:76:28: Parameter is not used: 'CAP_PERM_LD_CAP_VIOLATION'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   76 |     localparam logic [4:0] CAP_PERM_LD_CAP_VIOLATION       = 20;
+      |                            ^~~~~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:77:28: Parameter is not used: 'CAP_PERM_ST_CAP_VIOLATION'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   77 |     localparam logic [4:0] CAP_PERM_ST_CAP_VIOLATION       = 21;
+      |                            ^~~~~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:78:28: Parameter is not used: 'CAP_PERM_ST_CAP_LOCAL_VIOLATION'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   78 |     localparam logic [4:0] CAP_PERM_ST_CAP_LOCAL_VIOLATION = 22;
+      |                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:79:28: Parameter is not used: 'CAP_PERM_SEAL'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   79 |     localparam logic [4:0] CAP_PERM_SEAL                   = 23;
+      |                            ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:80:28: Parameter is not used: 'CAP_PERM_ACCESS_SYS_REGS'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   80 |     localparam logic [4:0] CAP_PERM_ACCESS_SYS_REGS        = 24;
+      |                            ^~~~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:81:28: Parameter is not used: 'CAP_PERM_CINVOKE'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   81 |     localparam logic [4:0] CAP_PERM_CINVOKE                = 25;
+      |                            ^~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:82:28: Parameter is not used: 'CAP_PERM_ACCESS_CINVOKE_IDC'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   82 |     localparam logic [4:0] CAP_PERM_ACCESS_CINVOKE_IDC     = 26;
+      |                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:83:28: Parameter is not used: 'CAP_PERM_UNSEAL'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   83 |     localparam logic [4:0] CAP_PERM_UNSEAL                 = 27;
+      |                            ^~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:84:28: Parameter is not used: 'CAP_PERM_SET_CID'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   84 |     localparam logic [4:0] CAP_PERM_SET_CID                = 28;
+      |                            ^~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:90:44: Parameter is not used: 'MEM_TYPE_TOK_CAP'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   90 |     localparam logic [CAP_OTYPE_WIDTH-1:0] MEM_TYPE_TOK_CAP = -3;
+      |                                            ^~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:91:44: Parameter is not used: 'IND_ENT_CAP'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   91 |     localparam logic [CAP_OTYPE_WIDTH-1:0] IND_ENT_CAP      = -4;
+      |                                            ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:92:44: Parameter is not used: 'SEALED_CAP'
+                                                                   : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   92 |     localparam logic [CAP_OTYPE_WIDTH-1:0] SEALED_CAP       = -17;
+      |                                            ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/cva6_cheri_pkg.sv:336:26: Parameter is not used: 'PCC_ROOT_CAP'
+                                                                    : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  336 |     localparam cap_pcc_t PCC_ROOT_CAP = '{
+      |                          ^~~~~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:367:19: Bits of signal are not used: 'ret'[127:0]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  367 |         cap_mem_t ret = cap_mem_t'(cap);
+      |                   ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:378:19: Bits of signal are not used: 'ret'[128:110,108:0]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  378 |         cap_mem_t ret = cap;
+      |                   ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:389:19: Bits of signal are not used: 'ret'[128:124,111:0]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  389 |         cap_mem_t ret = cap;
+      |                   ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:394:19: Bits of signal are not used: 'ret'[128:64]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  394 |         cap_mem_t ret = cap;
+      |                   ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:399:19: Bits of signal are not used: 'ret'[128:64]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  399 |         cap_mem_t ret = cap;
+      |                   ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:405:19: Bits of signal are not used: 'ret'[128:64]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  405 |         cap_mem_t ret = cap;
+      |                   ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:436:59: Bits of signal are not used: 'cap'[147:0]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  436 |     function automatic bool_t is_cap_reg_valid (cap_reg_t cap);
+      |                                                           ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:498:73: Bits of signal are not used: 'cap'[148,83:34]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  498 |     function automatic cap_meta_data_t get_cap_reg_meta_data (cap_reg_t cap);
+      |                                                                         ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:530:59: Bits of signal are not used: 'cap'[148,83:34]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  530 |     function automatic addrw_t get_cap_reg_base(cap_reg_t cap, cap_meta_data_t cap_meta_data);
+      |                                                           ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:530:80: Bits of signal are not used: 'cap_meta_data'[9:2]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  530 |     function automatic addrw_t get_cap_reg_base(cap_reg_t cap, cap_meta_data_t cap_meta_data);
+      |                                                                                ^~~~~~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:547:59: Bits of signal are not used: 'cap'[148,83:34]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  547 |     function automatic addrwe_t get_cap_reg_top(cap_reg_t cap, cap_meta_data_t cap_meta_data);
+      |                                                           ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:547:80: Bits of signal are not used: 'cap_meta_data'[9:4]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  547 |     function automatic addrwe_t get_cap_reg_top(cap_reg_t cap, cap_meta_data_t cap_meta_data);
+      |                                                                                ^~~~~~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:583:62: Bits of signal are not used: 'cap'[148:34]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  583 |     function automatic addrwe_t get_cap_reg_length(cap_reg_t cap, cap_meta_data_t cap_meta_data);
+      |                                                              ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:583:83: Bits of signal are not used: 'cap_meta_data'[9:4]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  583 |     function automatic addrwe_t get_cap_reg_length(cap_reg_t cap, cap_meta_data_t cap_meta_data);
+      |                                                                                   ^~~~~~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:601:61: Bits of signal are not used: 'cap'[148,69:34]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  601 |     function automatic addrw_t get_cap_reg_offset(cap_reg_t cap, cap_meta_data_t cap_meta_data);
+      |                                                             ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:601:82: Bits of signal are not used: 'cap_meta_data'[9:2]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  601 |     function automatic addrw_t get_cap_reg_offset(cap_reg_t cap, cap_meta_data_t cap_meta_data);
+      |                                                                                  ^~~~~~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:626:102: Bits of signal are not used: 'cap_meta_data'[6:5,3:0]
+                                                                      : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  626 |     function automatic cap_reg_t set_cap_reg_address(cap_reg_t cap, addrw_t address, cap_meta_data_t cap_meta_data);
+      |                                                                                                      ^~~~~~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:628:17: Bits of signal are not used: 'addr_mid'[63:14,10:0]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  628 |         addrw_t addr_mid = $unsigned(address >> cap.bounds.exp);
+      |                 ^~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:656:53: Bits of signal are not used: 'cap_meta_data'[6:0]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  656 |                                   , cap_meta_data_t cap_meta_data
+      |                                                     ^~~~~~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:752:61: Bits of signal are not used: 'cap'[148:84,69:34]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  752 |     function automatic bool_t is_cap_reg_inbounds(cap_reg_t cap, cap_meta_data_t meta_data, bool_t inclusive);
+      |                                                             ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:752:82: Bits of signal are not used: 'meta_data'[9:6,3:0]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  752 |     function automatic bool_t is_cap_reg_inbounds(cap_reg_t cap, cap_meta_data_t meta_data, bool_t inclusive);
+      |                                                                                  ^~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:831:16: Signal is not used: 'len_carry_in'
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  831 |         bool_t len_carry_in = (lmsk_carry_in_bit & new_top) != ((lmsk_carry_in_bit & new_base)^(lmsk_carry_in_bit & new_len));
+      |                ^~~~~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:904:61: Bits of signal are not used: 'cap'[83:70]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  904 |     function automatic capw_t cap_reg_to_cap_mem (cap_reg_t cap);
+      |                                                             ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:925:64: Bits of signal are not used: 'cap'[111:110]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  925 |     function automatic cap_reg_t cap_mem_to_cap_reg (cap_mem_t cap);
+      |                                                                ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:961:17: Bits of signal are not used: 'base'[63:14]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  961 |         addrw_t base = cap.base >> cap.exp;
+      |                 ^~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/cva6_cheri_pkg.sv:962:18: Bits of signal are not used: 'top'[64:14]
+                                                                     : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  962 |         addrwe_t top = cap.top >> cap.exp;
+      |                  ^~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:58:29: Parameter is not used: 'ArianeDefaultConfig'
+                                                               : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   58 |     localparam ariane_cfg_t ArianeDefaultConfig = '{
+      |                             ^~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/ariane_pkg.sv:83:53: Signal is not used: 'Cfg'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+   83 |     function automatic void check_cfg (ariane_cfg_t Cfg);
+      |                                                     ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/ariane_pkg.sv:102:76: Bits of signal are not used: 'Cfg'[6433:6338,4257:0]
+                                                                 : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  102 |     function automatic logic is_inside_nonidempotent_regions (ariane_cfg_t Cfg, logic[63:0] address);
+      |                                                                            ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/ariane_pkg.sv:111:70: Bits of signal are not used: 'Cfg'[6433:4258,2177:0]
+                                                                 : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  111 |     function automatic logic is_inside_execute_regions (ariane_cfg_t Cfg, logic[63:0] address);
+      |                                                                      ^~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/ariane_pkg.sv:121:72: Bits of signal are not used: 'Cfg'[6433:2178,97:0]
+                                                                 : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  121 |     function automatic logic is_inside_cacheable_regions (ariane_cfg_t Cfg, logic[63:0] address);
+      |                                                                        ^~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:136:16: Parameter is not used: 'BITS_SATURATION_COUNTER'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  136 |     localparam BITS_SATURATION_COUNTER = 2;
+      |                ^~~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:137:16: Parameter is not used: 'NR_COMMIT_PORTS'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  137 |     localparam NR_COMMIT_PORTS = 2;
+      |                ^~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:139:16: Parameter is not used: 'ENABLE_RENAME'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  139 |     localparam ENABLE_RENAME = 1'b0;
+      |                ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:141:16: Parameter is not used: 'ISSUE_WIDTH'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  141 |     localparam ISSUE_WIDTH = 1;
+      |                ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:144:29: Parameter is not used: 'NR_LOAD_PIPE_REGS'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  144 |     localparam int unsigned NR_LOAD_PIPE_REGS = 1;
+      |                             ^~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:145:29: Parameter is not used: 'NR_STORE_PIPE_REGS'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  145 |     localparam int unsigned NR_STORE_PIPE_REGS = 0;
+      |                             ^~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:148:29: Parameter is not used: 'DEPTH_SPEC'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  148 |     localparam int unsigned DEPTH_SPEC   = 4;
+      |                             ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:157:29: Parameter is not used: 'DEPTH_COMMIT'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  157 |     localparam int unsigned DEPTH_COMMIT = 8;
+      |                             ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:178:20: Parameter is not used: 'CheriPresent'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  178 |     localparam bit CheriPresent = 1'b1;  
+      |                    ^~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:181:29: Parameter is not used: 'LAT_COMP_FP32'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  181 |     localparam int unsigned LAT_COMP_FP32    = 'd2;
+      |                             ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:182:29: Parameter is not used: 'LAT_COMP_FP64'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  182 |     localparam int unsigned LAT_COMP_FP64    = 'd3;
+      |                             ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:183:29: Parameter is not used: 'LAT_COMP_FP16'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  183 |     localparam int unsigned LAT_COMP_FP16    = 'd1;
+      |                             ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:184:29: Parameter is not used: 'LAT_COMP_FP16ALT'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  184 |     localparam int unsigned LAT_COMP_FP16ALT = 'd1;
+      |                             ^~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:185:29: Parameter is not used: 'LAT_COMP_FP8'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  185 |     localparam int unsigned LAT_COMP_FP8     = 'd1;
+      |                             ^~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:186:29: Parameter is not used: 'LAT_DIVSQRT'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  186 |     localparam int unsigned LAT_DIVSQRT      = 'd2;
+      |                             ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:187:29: Parameter is not used: 'LAT_NONCOMP'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  187 |     localparam int unsigned LAT_NONCOMP      = 'd1;
+      |                             ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:188:29: Parameter is not used: 'LAT_CONV'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  188 |     localparam int unsigned LAT_CONV         = 'd2;
+      |                             ^~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:204:20: Parameter is not used: 'RVFVEC'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  204 |     localparam bit RVFVEC     = RVF     & XFVEC & FLEN>32;  
+      |                    ^~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:205:20: Parameter is not used: 'XF16VEC'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  205 |     localparam bit XF16VEC    = XF16    & XFVEC & FLEN>16;  
+      |                    ^~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:206:20: Parameter is not used: 'XF16ALTVEC'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  206 |     localparam bit XF16ALTVEC = XF16ALT & XFVEC & FLEN>16;  
+      |                    ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:207:20: Parameter is not used: 'XF8VEC'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  207 |     localparam bit XF8VEC     = XF8     & XFVEC & FLEN>8;   
+      |                    ^~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:211:30: Parameter is not used: 'ARIANE_MARCHID'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  211 |     localparam riscv::xlen_t ARIANE_MARCHID = {{riscv::XLEN-32{1'b0}}, 32'd3};
+      |                              ^~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:213:30: Parameter is not used: 'ISA_CODE'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  213 |     localparam riscv::xlen_t ISA_CODE = (RVA <<  0)   
+      |                              ^~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:228:16: Parameter is not used: 'NR_WB_PORTS'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  228 |     localparam NR_WB_PORTS = 4;
+      |                ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:231:31: Parameter is not used: 'DebugHartInfo'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  231 |     localparam dm::hartinfo_t DebugHartInfo = '{
+      |                               ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:241:20: Parameter is not used: 'ENABLE_SPIKE_COMMIT_LOG'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  241 |     localparam bit ENABLE_SPIKE_COMMIT_LOG = 1'b1;
+      |                    ^~~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:247:22: Parameter is not used: 'INVALIDATE_ON_FLUSH'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  247 |     localparam logic INVALIDATE_ON_FLUSH = 1'b1;
+      |                      ^~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:257:20: Parameter is not used: 'ENABLE_CYCLE_COUNT'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  257 |     localparam bit ENABLE_CYCLE_COUNT = 1'b1;
+      |                    ^~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:258:20: Parameter is not used: 'ENABLE_WFI'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  258 |     localparam bit ENABLE_WFI = 1'b1;
+      |                    ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:259:20: Parameter is not used: 'ZERO_TVAL'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  259 |     localparam bit ZERO_TVAL = 1'b0;
+      |                    ^~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:262:29: Parameter is not used: 'SMODE_STATUS_READ_MASK'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  262 |     localparam logic [63:0] SMODE_STATUS_READ_MASK = riscv::SSTATUS_UIE
+      |                             ^~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:275:29: Parameter is not used: 'SMODE_STATUS_WRITE_MASK'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  275 |     localparam logic [63:0] SMODE_STATUS_WRITE_MASK = riscv::SSTATUS_SIE
+      |                             ^~~~~~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:282:29: Parameter is not used: 'HSTATUS_WRITE_MASK'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  282 |     localparam logic [63:0] HSTATUS_WRITE_MASK      = riscv::HSTATUS_VSBE
+      |                             ^~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:291:29: Parameter is not used: 'ENVCFG_WRITE_MASK'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  291 |     localparam logic [63:0] ENVCFG_WRITE_MASK       = riscv::MENVCFG_FIOM;
+      |                             ^~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:294:29: Parameter is not used: 'HS_DELEG_INTERRUPTS'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  294 |     localparam logic [63:0] HS_DELEG_INTERRUPTS     = riscv::MIP_VSSIP
+      |                             ^~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:298:29: Parameter is not used: 'VS_DELEG_INTERRUPTS'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  298 |     localparam logic [63:0] VS_DELEG_INTERRUPTS     = riscv::MIP_VSSIP
+      |                             ^~~~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:307:29: Parameter is not used: 'FETCH_FIFO_DEPTH'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  307 |     localparam int unsigned FETCH_FIFO_DEPTH  = 4;
+      |                             ^~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:310:29: Parameter is not used: 'INSTR_PER_FETCH'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  310 |     localparam int unsigned INSTR_PER_FETCH = FETCH_WIDTH / 16;
+      |                             ^~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:393:16: Parameter is not used: 'EXC_OFF_RST'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  393 |     localparam EXC_OFF_RST      = 8'h80;
+      |                ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:395:16: Parameter is not used: 'SupervisorIrq'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  395 |     localparam SupervisorIrq = 1;
+      |                ^~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:396:16: Parameter is not used: 'MachineIrq'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  396 |     localparam MachineIrq = 0;
+      |                ^~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:455:29: Parameter is not used: 'ICACHE_TAG_WIDTH'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  455 |     localparam int unsigned ICACHE_TAG_WIDTH   = riscv::PLEN-ICACHE_INDEX_WIDTH;   
+      |                             ^~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:456:29: Parameter is not used: 'ICACHE_LINE_WIDTH'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  456 |     localparam int unsigned ICACHE_LINE_WIDTH  = 128;  
+      |                             ^~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:462:29: Parameter is not used: 'DCACHE_LINE_WIDTH'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  462 |     localparam int unsigned DCACHE_LINE_WIDTH  = 128;  
+      |                             ^~~~~~~~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:692:21: Parameter is not used: 'MMU_PRESENT'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  692 |      localparam bit MMU_PRESENT = 1'b1;   
+      |                     ^~~~~~~~~~~
+%Warning-UNUSEDPARAM: ../../../core/include/ariane_pkg.sv:732:16: Parameter is not used: 'PPN4K_WIDTH'
+                                                                : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  732 |     localparam PPN4K_WIDTH = 38;
+      |                ^~~~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/ariane_pkg.sv:834:69: Bits of signal are not used: 'instruction_i'[11:0]
+                                                                 : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  834 |     function automatic logic [riscv::VLEN-1:0] uj_imm (logic [31:0] instruction_i);
+      |                                                                     ^~~~~~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/ariane_pkg.sv:838:68: Bits of signal are not used: 'instruction_i'[19:0]
+                                                                 : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  838 |     function automatic logic [riscv::VLEN-1:0] i_imm (logic [31:0] instruction_i);
+      |                                                                    ^~~~~~~~~~~~~
+%Warning-UNUSEDSIGNAL: ../../../core/include/ariane_pkg.sv:842:69: Bits of signal are not used: 'instruction_i'[24:12,6:0]
+                                                                 : ... In instance cheri_branch_unit_testharness.branch_unit_cheri
+  842 |     function automatic logic [riscv::VLEN-1:0] sb_imm (logic [31:0] instruction_i);
+      |                                                                     ^~~~~~~~~~~~~
+%Warning-CASEINCOMPLETE: ../../../core/include/ariane_pkg.sv:873:9: Case values incompletely covered (example pattern 0x5)
+                                                                  : ... In instance ariane_pkg
+  873 |         case (size)
+      |         ^~~~
+cd /home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_branch_unit/work-ver/ && make -j -f Vcheri_branch_unit_testharness.mk
+make[1]: Entering directory '/home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_branch_unit/work-ver'
+make[1]: *** No rule to make target '/home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_branch_unit//src/cheri_branch_unit_tb.cpp', needed by 'cheri_branch_unit_tb.o'.  Stop.
+make[1]: Leaving directory '/home/ninolomata/Desktop/Development/cva6-development/cva6/corev_apu/tb/tb_cheri_branch_unit/work-ver'
+make: *** [Makefile:115: verilate] Error 2

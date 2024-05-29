@@ -25,8 +25,9 @@ module amo_buffer #(
     output logic ready_o,  // AMO unit is ready
     input ariane_pkg::amo_t amo_op_i,  // AMO Operation
     input  logic [CVA6Cfg.PLEN-1:0]      paddr_i,            // physical address of store which needs to be placed in the queue
-    input logic [CVA6Cfg.XLEN-1:0] data_i,  // data which is placed in the queue
-    input logic [1:0] data_size_i,  // type of request we are making (e.g.: bytes to write)
+    input logic [CVA6Cfg.CLEN-1:0] data_i,  // data which is placed in the queue
+    input logic [CVA6Cfg.CheriCapTagWidth-1:0]  cap_tag_i, // CHERI: capability tag
+    input logic [CVA6Cfg.DCACHE_DATA_SIZE_WIDTH-1:0] data_size_i,  // type of request we are making (e.g.: bytes to write)
     // D$
     output ariane_pkg::amo_req_t amo_req_o,  // request to cache subsytem
     input ariane_pkg::amo_resp_t amo_resp_i,  // response from cache subsystem
@@ -40,8 +41,9 @@ module amo_buffer #(
   typedef struct packed {
     ariane_pkg::amo_t        op;
     logic [CVA6Cfg.PLEN-1:0] paddr;
-    logic [CVA6Cfg.XLEN-1:0] data;
-    logic [1:0]              size;
+    logic [CVA6Cfg.CLEN-1:0] data;
+    logic [CVA6Cfg.CheriCapTagWidth-1:0] ctag;
+    logic [CVA6Cfg.DCACHE_DATA_SIZE_WIDTH-1:0] size;
   } amo_op_t;
 
   amo_op_t amo_data_in, amo_data_out;
@@ -50,12 +52,16 @@ module amo_buffer #(
   assign amo_req_o.req = no_st_pending_i & amo_valid_commit_i & amo_valid;
   assign amo_req_o.amo_op = amo_data_out.op;
   assign amo_req_o.size = amo_data_out.size;
-  assign amo_req_o.operand_a = {{64 - CVA6Cfg.PLEN{1'b0}}, amo_data_out.paddr};
-  assign amo_req_o.operand_b = {{64 - CVA6Cfg.XLEN{1'b0}}, amo_data_out.data};
+  always_comb begin
+    amo_req_o.operand_a = '0;
+    amo_req_o.operand_a.addr = {{64-CVA6Cfg.PLEN{1'b0}}, amo_data_out.paddr};
+  end
+  assign amo_req_o.operand_b = amo_data_out.data;
 
   assign amo_data_in.op = amo_op_i;
   assign amo_data_in.data = data_i;
   assign amo_data_in.paddr = paddr_i;
+  assign amo_data_in.ctag = cap_tag_i;
   assign amo_data_in.size = data_size_i;
 
   // only flush if we are currently not committing the AMO

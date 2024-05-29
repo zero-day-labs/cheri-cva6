@@ -22,7 +22,7 @@
 `include "uvm_macros.svh"
 `endif
 
-module ariane_testharness #(
+module ariane_testharness import cva6_cheri_pkg::*; #(
   parameter config_pkg::cva6_cfg_t CVA6Cfg = build_config_pkg::build_config(cva6_config_pkg::cva6_cfg),
   //
   parameter int unsigned AXI_USER_WIDTH    = CVA6Cfg.AxiUserWidth,
@@ -487,6 +487,16 @@ module ariane_testharness #(
     .rdata_o    ( rdata                                                                       )
   );
 
+  /* cva6_cheri_tag_mem tag_mem (
+    .clk_i        ( clk_i     ),
+    .rst_ni       ( rst_ni    ),
+    .address_i    ( addr      ),
+    .we_i         ( we        ),
+    .writedata_i  ( wuser ),
+    .readdata_o   ( ruser )
+  ); */
+
+
   // ---------------
   // AXI Xbar
   // ---------------
@@ -581,7 +591,7 @@ module ariane_testharness #(
 `ifndef VERILATOR
     .InclUART     ( 1'b1                     ),
 `else
-    .InclUART     ( 1'b0                     ),
+    .InclUART     ( 1'b0                    ),
 `endif
     .InclSPI      ( 1'b0                     ),
     .InclEthernet ( 1'b0                     )
@@ -624,6 +634,12 @@ module ariane_testharness #(
   rvfi_csr_t rvfi_csr;
   rvfi_instr_t [CVA6Cfg.NrCommitPorts-1:0]  rvfi_instr;
 
+  cva6_cheri_pkg::cap_pcc_t boot_cap;
+  always_comb begin : gen_boot_cap
+    boot_cap = PCC_ROOT_CAP;
+    boot_cap.addr = ariane_soc::ROMBase;
+  end
+
   ariane #(
     .CVA6Cfg              ( CVA6Cfg             ),
     .rvfi_probes_instr_t  ( rvfi_probes_instr_t ),
@@ -634,7 +650,7 @@ module ariane_testharness #(
   ) i_ariane (
     .clk_i                ( clk_i               ),
     .rst_ni               ( ndmreset_n          ),
-    .boot_addr_i          ( ariane_soc::ROMBase ), // start fetching from ROM
+    .boot_addr_i          ( (CVA6Cfg.CheriPresent) ? boot_cap : ariane_soc::ROMBase ), // start fetching from ROM
     .hart_id_i            ( {56'h0, hart_id}    ),
     .irq_i                ( irqs                ),
     .ipi_i                ( ipi                 ),
@@ -644,7 +660,7 @@ module ariane_testharness #(
 `ifdef SPIKE_TANDEM
     .debug_req_i          ( 1'b0                ),
 `else
-    .debug_req_i          ( debug_req_core      ),
+    .debug_req_i          ( 1'b0                ),
 `endif
     .noc_req_o            ( axi_ariane_req      ),
     .noc_resp_i           ( axi_ariane_resp     )

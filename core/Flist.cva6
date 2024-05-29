@@ -60,6 +60,7 @@ ${CVA6_REPO_DIR}/core/cvfpu/src/fpu_div_sqrt_mvp/hdl/preprocess_mvp.sv
 ${CVA6_REPO_DIR}/core/include/config_pkg.sv
 ${CVA6_REPO_DIR}/core/include/${TARGET_CFG}_config_pkg.sv
 ${CVA6_REPO_DIR}/core/include/riscv_pkg.sv
+${CVA6_REPO_DIR}/core/include/cva6_cheri_pkg.sv
 // Note: depends on fpnew_pkg, above
 ${CVA6_REPO_DIR}/core/include/ariane_pkg.sv
 ${CVA6_REPO_DIR}/vendor/pulp-platform/axi/src/axi_pkg.sv
@@ -120,6 +121,7 @@ ${CVA6_REPO_DIR}/core/load_store_unit.sv
 ${CVA6_REPO_DIR}/core/lsu_bypass.sv
 ${CVA6_REPO_DIR}/core/mult.sv
 ${CVA6_REPO_DIR}/core/multiplier.sv
+${CVA6_REPO_DIR}/core/cheri_unit.sv
 ${CVA6_REPO_DIR}/core/serdiv.sv
 ${CVA6_REPO_DIR}/core/perf_counters.sv
 ${CVA6_REPO_DIR}/core/ariane_regfile_ff.sv

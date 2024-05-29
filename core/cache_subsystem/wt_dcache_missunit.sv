@@ -43,7 +43,7 @@ module wt_dcache_missunit
     output logic [NumPorts-1:0] miss_ack_o,
     input logic [NumPorts-1:0] miss_nc_i,
     input logic [NumPorts-1:0] miss_we_i,
-    input logic [NumPorts-1:0][CVA6Cfg.XLEN-1:0] miss_wdata_i,
+    input logic [NumPorts-1:0][CVA6Cfg.CLEN-1:0] miss_wdata_i,
     input logic [NumPorts-1:0][CVA6Cfg.DCACHE_USER_WIDTH-1:0] miss_wuser_i,
     input logic [NumPorts-1:0][CVA6Cfg.PLEN-1:0] miss_paddr_i,
     input logic [NumPorts-1:0][CVA6Cfg.DCACHE_SET_ASSOC-1:0] miss_vld_bits_i,
@@ -99,6 +99,7 @@ module wt_dcache_missunit
       3'b001:  out[0:0] = '0;
       3'b010:  out[1:0] = '0;
       3'b011:  out[2:0] = '0;
+      3'b100:  out[3:0] = '0;
       3'b111:  out[CVA6Cfg.DCACHE_OFFSET_WIDTH-1:0] = '0;
       default: ;
     endcase
@@ -140,9 +141,9 @@ module wt_dcache_missunit
   logic mask_reads, lock_reqs;
   logic amo_sel, miss_is_write;
   logic amo_req_d, amo_req_q;
-  logic [63:0] amo_rtrn_mux;
-  logic [CVA6Cfg.XLEN-1:0] amo_data, amo_data_a, amo_data_b;
-  logic [CVA6Cfg.XLEN-1:0] amo_user;  //DCACHE USER ? CVA6Cfg.DCACHE_USER_WIDTH
+  logic [CVA6Cfg.CLEN-1:0] amo_rtrn_mux;
+  logic [CVA6Cfg.CLEN-1:0] amo_data, amo_data_a, amo_data_b;
+  logic [CVA6Cfg.DCACHE_USER_WIDTH-1:0] amo_user;  //DCACHE USER ? CVA6Cfg.DCACHE_USER_WIDTH
   logic [CVA6Cfg.PLEN-1:0] tmp_paddr;
   logic [$clog2(NumPorts)-1:0] miss_port_idx;
   logic [DCACHE_CL_IDX_WIDTH-1:0] cnt_d, cnt_q;
@@ -247,7 +248,10 @@ module wt_dcache_missunit
   // if size = 32bit word, select appropriate offset, replicate for openpiton...
 
   if (CVA6Cfg.RVA) begin
-    if (CVA6Cfg.IS_XLEN64) begin : gen_amo_64b_data
+    if (CVA6Cfg.IS_XLEN64 && CVA6Cfg.CheriPresent) begin : gen_amo_128b_data
+      assign amo_data_a = {amo_req_i.operand_b[0+:32], amo_req_i.operand_b[0+:32],amo_req_i.operand_b[0+:32], amo_req_i.operand_b[0+:32]};
+      assign amo_data_b = amo_req_i.operand_b;
+    end else if (CVA6Cfg.IS_XLEN64 || (!CVA6Cfg.IS_XLEN64 && CVA6Cfg.CheriPresent)) begin : gen_amo_64b_data
       assign amo_data_a = {amo_req_i.operand_b[0+:32], amo_req_i.operand_b[0+:32]};
       assign amo_data_b = amo_req_i.operand_b;
     end else begin : gen_amo_32b_data

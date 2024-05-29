@@ -33,7 +33,8 @@ module decoder
     // Debug (async) request - SUBSYSTEM
     input logic debug_req_i,
     // PC from fetch stage - FRONTEND
-    input logic [CVA6Cfg.VLEN-1:0] pc_i,
+    // TODO-cheri: make cheri optional
+    input logic [CVA6Cfg.PCLEN-1:0] pc_i,
     // Is a compressed instruction - compressed_decoder
     input logic is_compressed_i,
     // Compressed form of instruction - FRONTEND
@@ -80,6 +81,8 @@ module decoder
     input logic tsr_i,
     // Hypervisor user mode - CSR_REGFILE
     input logic hu_i,
+    // Default Data Capability (DDC) - CSR_REGFILE
+    input  logic [CVA6Cfg.REGLEN-1:0] ddc_i,
     // Instruction to be added to scoreboard entry - ISSUE_STAGE
     output scoreboard_entry_t instruction_o,
     // Instruction - ISSUE_STAGE
@@ -102,6 +105,12 @@ module decoder
   assign instr = riscv::instruction_t'(instruction_i);
   // transformed instruction
   logic [31:0] tinst;
+  // capability mode
+  logic cap_mode;
+  cva6_cheri_pkg::cap_pcc_t pcc;
+  // cap mode is equal to PCC.flags.cap_mode
+  assign pcc = cva6_cheri_pkg::cap_pcc_t'(pc_i);
+  assign cap_mode = (CVA6Cfg.CheriPresent) ? pcc.flags.cap_mode : 1'b0;
   // --------------------
   // Immediate select
   // --------------------
@@ -112,7 +121,8 @@ module decoder
     SBIMM,
     UIMM,
     JIMM,
-    RS3
+    RS3,
+    EXTZ
   } imm_select;
 
   logic [CVA6Cfg.XLEN-1:0] imm_i_type;
@@ -178,6 +188,13 @@ module decoder
     instruction_o.use_zimm                 = 1'b0;
     instruction_o.bp                       = branch_predict_i;
     instruction_o.vfp                      = 1'b0;
+    if (CVA6Cfg.CheriPresent) begin
+      instruction_o.ddc     = ddc_i;
+      instruction_o.use_ddc = 1'b0;
+      instruction_o.clr     = 1'b0;
+      instruction_o.mask    = '0;
+      instruction_o.quarter = '0;
+    end
     tinst                                  = '0;
     ecall                                  = 1'b0;
     ebreak                                 = 1'b0;
@@ -451,7 +468,25 @@ module decoder
             // FENCE.I
             3'b001: instruction_o.op = ariane_pkg::FENCE_I;
 
-            default: illegal_instr = 1'b1;
+            default: begin
+              if (CVA6Cfg.CheriPresent) begin
+                case (instr.stype.funct3)
+                  3'b010: begin
+                    instruction_o.fu  = LOAD;
+                    imm_select = IIMM;
+                    instruction_o.rs1[4:0] = instr.itype.rs1;
+                    instruction_o.rd[4:0]  = instr.itype.rd;
+                    instruction_o.use_ddc  = cap_mode ? 1'b0 : 1'b1;
+                    instruction_o.op  = ariane_pkg::LC;
+                    tinst = {17'b0, instr.itype.funct3, instr.itype.rd, instr.itype.opcode};
+                    tinst[1] = is_compressed_i ? 1'b0 : 'b1;
+                  end
+                default: illegal_instr = 1'b1;
+                endcase
+              end else begin
+                illegal_instr = 1'b1;
+              end
+            end
           endcase
         end
 
@@ -989,6 +1024,11 @@ module decoder
           imm_select = SIMM;
           instruction_o.rs1[4:0] = instr.stype.rs1;
           instruction_o.rs2[4:0] = instr.stype.rs2;
+          if (CVA6Cfg.CheriPresent) begin
+            instruction_o.use_ddc = cap_mode ? 1'b0 : 1'b1;
+          end else begin
+            instruction_o.use_ddc = 1'b0;
+          end
           // determine store size
           unique case (instr.stype.funct3)
             3'b000: instruction_o.op = ariane_pkg::SB;
@@ -996,6 +1036,8 @@ module decoder
             3'b010: instruction_o.op = ariane_pkg::SW;
             3'b011:
             if (CVA6Cfg.XLEN == 64) instruction_o.op = ariane_pkg::SD;
+            else illegal_instr = 1'b1;
+            3'b100: if (CVA6Cfg.CheriPresent) instruction_o.op  = ariane_pkg::SC;
             else illegal_instr = 1'b1;
             default: illegal_instr = 1'b1;
           endcase
@@ -1010,6 +1052,11 @@ module decoder
           imm_select = IIMM;
           instruction_o.rs1[4:0] = instr.itype.rs1;
           instruction_o.rd[4:0] = instr.itype.rd;
+          if (CVA6Cfg.CheriPresent) begin
+            instruction_o.use_ddc = cap_mode ? 1'b0 : 1'b1;
+          end else begin
+            instruction_o.use_ddc = 1'b0;
+          end
           // determine load size and signed type
           unique case (instr.itype.funct3)
             3'b000: instruction_o.op = ariane_pkg::LB;
@@ -1388,7 +1435,11 @@ module decoder
         // Jump and link register
         riscv::OpcodeJalr: begin
           instruction_o.fu        = CTRL_FLOW;
-          instruction_o.op        = ariane_pkg::JALR;
+          if (CVA6Cfg.CheriPresent) begin
+            instruction_o.op        = cap_mode ? ariane_pkg::CJALR :  ariane_pkg::JALR;
+          end else begin
+            instruction_o.op        = ariane_pkg::JALR;
+          end
           instruction_o.rs1[4:0]  = instr.itype.rs1;
           imm_select              = IIMM;
           instruction_o.rd[4:0]   = instr.itype.rd;
@@ -1399,6 +1450,8 @@ module decoder
         // Jump and link
         riscv::OpcodeJal: begin
           instruction_o.fu        = CTRL_FLOW;
+          if (CVA6Cfg.CheriPresent && cap_mode)
+            instruction_o.op    = ariane_pkg::CJAL;
           imm_select              = JIMM;
           instruction_o.rd[4:0]   = instr.utype.rd;
           is_control_flow_instr_o = 1'b1;
@@ -1409,6 +1462,10 @@ module decoder
           imm_select            = UIMM;
           instruction_o.use_pc  = 1'b1;
           instruction_o.rd[4:0] = instr.utype.rd;
+          if(CVA6Cfg.CheriPresent && cap_mode) begin
+            instruction_o.fu      = CLU;
+            instruction_o.op      = ariane_pkg::AUIPCC;
+          end
         end
 
         riscv::OpcodeLui: begin
@@ -1416,6 +1473,212 @@ module decoder
           instruction_o.fu      = ALU;
           instruction_o.rd[4:0] = instr.utype.rd;
         end
+
+        // --------------------------------
+                // CHERI Instructions
+                // --------------------------------
+                /**
+                 * TODO cheri: Only decoding instructions for now
+                 */
+                riscv::OpcodeCheri: begin
+                  if (CVA6Cfg.CheriPresent) begin
+                    instruction_o.fu  = CLU;
+                    instruction_o.rs1[4:0]  = instr.rtype.rs1;
+                    instruction_o.rs2[4:0]  = instr.rtype.rs2;
+                    instruction_o.rd  = instr.rtype.rd;
+                    case(instr.rtype.funct3)
+                        3'b000: begin
+                            case(instr.rtype.funct7)
+                                // ----------------------------------------------
+                                // CSPECIAL_RW
+                                // ----------------------------------------------
+                                7'b000_0001: begin
+                                    instruction_o.fu = CSR;
+                                    imm_select = IIMM;
+                                    if (instr.rtype.rs1 == 5'b0)
+                                        instruction_o.op = ariane_pkg::SCR_READ;
+                                    else
+                                        instruction_o.op = ariane_pkg::SCR_READWRITE;
+                                end
+                                // ----------------------------------
+                                // Capability-Inspection Instructions
+                                // ----------------------------------
+                                7'b111_1111: begin
+                                    case(instr.rtype.rs2)
+                                        5'b00000:   instruction_o.op = ariane_pkg::CGET_PERM;
+                                        5'b00001:   instruction_o.op = ariane_pkg::CGET_TYPE;
+                                        5'b00010:   instruction_o.op = ariane_pkg::CGET_BASE;
+                                        5'b00011:   instruction_o.op = ariane_pkg::CGET_LEN;
+                                        5'b00100:   instruction_o.op = ariane_pkg::CGET_TAG;
+                                        5'b00101:   instruction_o.op = ariane_pkg::CGET_SEALED;
+                                        5'b00110:   instruction_o.op = ariane_pkg::CGET_OFFSET;
+                                        5'b00111:   instruction_o.op = ariane_pkg::CGET_FLAGS;
+                                        5'b01111:   instruction_o.op = ariane_pkg::CGET_ADDR;
+                                        5'b11000:   instruction_o.op = ariane_pkg::CGET_TOP;
+                                        // ------------------------------------
+                                        // Capability-Modification Instructions
+                                        // ------------------------------------
+                                        5'b01011:   instruction_o.op = ariane_pkg::CCLEAR_TAG;
+                                        5'b10001:   instruction_o.op = ariane_pkg::CSEAL_ENTRY;
+                                        // ------------------------------------
+                                        // Pointer-Arithmetic Instructions
+                                        // ------------------------------------
+                                        5'b01010:   instruction_o.op = ariane_pkg::CMOVE;
+                                        // ------------------------------------
+                                        // Fast Register-Clearing Instructions
+                                        // ------------------------------------
+                                        5'b01101:   instruction_o.op = ariane_pkg::CLEAR;
+                                        5'b01110:   begin
+                                            instruction_o.fu        = NONE;
+                                            instruction_o.clr       = 1'b1;
+                                            instruction_o.mask      = {instr.instr[17:15],instr.instr[11:7]};
+                                            instruction_o.quarter   = instr.instr[19:18];
+                                            instruction_o.op        = ariane_pkg::CCLEAR;
+                                        end
+                                        5'b10000:   instruction_o.op = ariane_pkg::FPCLEAR;
+                                        // ---------------------------------------------------------
+                                        // Adjusting to Compressed Capability Precision Instructions
+                                        // ---------------------------------------------------------
+                                        5'b01000:   instruction_o.op = ariane_pkg::CRND_REPRESENTABLE_LEN;
+                                        5'b01001:   instruction_o.op = ariane_pkg::CRND_REPRESENTABLE_ALIGN_MSK;
+                                        // ------------------------------------
+                                        // Control-Flow Instructions
+                                        // ------------------------------------
+                                        5'b01100: begin
+                                            instruction_o.fu        = CTRL_FLOW;
+                                            instruction_o.op        = ariane_pkg::CJALR;
+                                            instruction_o.rs1[4:0]  = instr.itype.rs1;
+                                            imm_select              = NOIMM;
+                                            instruction_o.rd[4:0]   = instr.itype.rd;
+                                            is_control_flow_instr_o = 1'b1;
+                                        end
+                                        5'b10100: begin
+                                            instruction_o.fu        = CTRL_FLOW;
+                                            instruction_o.op        = ariane_pkg::JALR;
+                                            instruction_o.rs1[4:0]  = instr.itype.rs1;
+                                            imm_select              = NOIMM;
+                                            instruction_o.rd[4:0]   = instr.itype.rd;
+                                            is_control_flow_instr_o = 1'b1;
+                                        end
+                                        // ------------------------------------
+                                        // Fast Register-Clearing Instructions
+                                        // ------------------------------------
+                                        5'b01010: begin
+                                            instruction_o.fu  = LOAD;
+                                            imm_select = NOIMM;
+                                            instruction_o.rs1[4:0] = instr.itype.rs1;
+                                            instruction_o.rd[4:0]  = instr.itype.rd;
+                                            instruction_o.op = ariane_pkg::CLOAD_TAGS;
+                                        end
+                                        default: illegal_instr = 1'b1;
+                                    endcase
+                                end
+                                7'b111_1110: begin
+                                    case(instr.rtype.rd)
+                                        // ------------------------------------
+                                        // Control-Flow Instructions
+                                        // ------------------------------------
+                                        5'h0: instruction_o.op = ariane_pkg::CINVOKE;
+                                        // ------------------------------------
+                                        // Fast Register-Clearing Instructions
+                                        // ------------------------------------
+                                        5'b11111: instruction_o.op = ariane_pkg::CCLEAR_TAGS;
+                                        default: illegal_instr = 1'b1;
+                                    endcase
+                                end
+                                // ------------------------------------
+                                // Load CHERI Instructions
+                                // ------------------------------------
+                                7'b111_1101: begin
+                                    instruction_o.fu  = LOAD;
+                                    // Immediate field not use
+                                    imm_select = NOIMM;
+                                    instruction_o.rs1[4:0] = instr.itype.rs1;
+                                    instruction_o.rd[4:0]  = instr.itype.rd;
+                                    // if instr[23] == 0, this is a DDC relative load
+                                    instruction_o.use_ddc  = instr.instr[23] ? 1'b0 : 1'b1;
+                                    // determine load size and signed type
+                                    unique case (instr.rtype.rs2[2:0])
+                                        3'b000: instruction_o.op  = ariane_pkg::LB;
+                                        3'b001: instruction_o.op  = ariane_pkg::LH;
+                                        3'b010: instruction_o.op  = ariane_pkg::LW;
+                                        3'b011: instruction_o.op  = ariane_pkg::LD;
+                                        3'b100: instruction_o.op  = ariane_pkg::LBU;
+                                        3'b101: instruction_o.op  = ariane_pkg::LHU;
+                                        3'b110: instruction_o.op  = ariane_pkg::LWU;
+                                        3'b111: instruction_o.op  = ariane_pkg::LC;
+                                    endcase
+                                end
+                                // ------------------------------------
+                                // Store CHERI Instructions
+                                // ------------------------------------
+                                7'b111_1100: begin
+                                    instruction_o.fu  = STORE;
+                                    // Immediate field not use
+                                    imm_select = NOIMM;
+                                    instruction_o.rs1[4:0]  = instr.stype.rs1;
+                                    instruction_o.rs2[4:0]  = instr.stype.rs2;
+                                    // if instr[23] == 0, this is a DDC relative load
+                                    instruction_o.use_ddc  = instr.instr[10] ? 1'b0 : 1'b1;
+                                    // determine store size
+                                    unique case (instr.rtype.rd[2:0])
+                                        3'b000: instruction_o.op  = ariane_pkg::SB;
+                                        3'b001: instruction_o.op  = ariane_pkg::SH;
+                                        3'b010: instruction_o.op  = ariane_pkg::SW;
+                                        3'b011: instruction_o.op  = ariane_pkg::SD;
+                                        3'b100: instruction_o.op  = ariane_pkg::SC;
+                                        default: illegal_instr = 1'b1;
+                                    endcase
+                                end
+                                // ------------------------------------
+                                // Capability-Modification Instructions
+                                // ------------------------------------
+                                7'b000_1011:  instruction_o.op = ariane_pkg::CSEAL;
+                                7'b000_1100:  instruction_o.op = ariane_pkg::CUNSEAL;
+                                7'b000_1101:  instruction_o.op = ariane_pkg::CAND_PERM;
+                                7'b000_1110:  instruction_o.op = ariane_pkg::CSET_FLAGS;
+                                7'b000_1111:  instruction_o.op = ariane_pkg::CSET_OFFSET;
+                                7'b001_0000:  instruction_o.op = ariane_pkg::CSET_ADDR;
+                                7'b001_0001:  instruction_o.op = ariane_pkg::CINC_OFFSET;
+                                7'b000_1000:  instruction_o.op = ariane_pkg::CSET_BOUNDS;
+                                7'b000_1001:  instruction_o.op = ariane_pkg::CSET_BOUNDS_EXACT;
+                                7'b001_1101:  instruction_o.op = ariane_pkg::CBUILD_CAP;
+                                7'b001_1110:  instruction_o.op = ariane_pkg::CCOPY_TYPE;
+                                7'b001_1111:  instruction_o.op = ariane_pkg::CCSEAL;
+                                // ------------------------------------
+                                // Pointer-Arithmetic Instructions
+                                // ------------------------------------
+                                7'b001_0010:  begin
+                                    instruction_o.use_ddc  = (instr.rtype.rs2 == 0) ? 1'b1 : 1'b0;
+                                    instruction_o.op = ariane_pkg::CTO_PTR;
+                                end
+                                7'b001_0011:  begin
+                                    instruction_o.use_ddc  = (instr.rtype.rs1 == 0) ? 1'b1 : 1'b0;
+                                    instruction_o.op = ariane_pkg::CFROM_PTR;
+                                end
+                                7'b001_0100:  instruction_o.op = ariane_pkg::CSUB;
+                                // ------------------------------------
+                                // Pointer-Comparison Instructions
+                                // ------------------------------------
+                                7'b010_0000:  instruction_o.op = ariane_pkg::CTEST_SUBSET;
+                                7'b010_0001:  instruction_o.op = ariane_pkg::CSET_EQUAL_EXACT;
+                                default: illegal_instr = 1'b1;
+                            endcase
+                        end
+                        3'b001: begin
+                            imm_select = IIMM;
+                            instruction_o.op = ariane_pkg::CINC_OFFSET_IMM;
+                        end
+                        3'b010: begin
+                            imm_select = EXTZ;
+                            instruction_o.op = ariane_pkg::CSET_BOUNDS_IMM;
+                        end
+                        default: illegal_instr = 1'b1;
+                    endcase
+                  end else begin
+                    illegal_instr = 1'b1;
+                  end
+                end
 
         default: illegal_instr = 1'b1;
       endcase
@@ -1475,43 +1738,51 @@ module decoder
     };
     imm_bi_type = {{CVA6Cfg.XLEN - 5{instruction_i[24]}}, instruction_i[24:20]};
 
+    // TODO-cheri: make cheri optional
+    instruction_o.result = '{default:0};
+
     // NOIMM, IIMM, SIMM, BIMM, UIMM, JIMM, RS3
     // select immediate
     case (imm_select)
       IIMM: begin
-        instruction_o.result  = imm_i_type;
+        instruction_o.result[CVA6Cfg.XLEN-1:0]  = imm_i_type;
         instruction_o.use_imm = 1'b1;
       end
       SIMM: begin
-        instruction_o.result  = imm_s_type;
+        instruction_o.result[CVA6Cfg.XLEN-1:0]  = imm_s_type;
         instruction_o.use_imm = 1'b1;
       end
       SBIMM: begin
-        instruction_o.result  = imm_sb_type;
+        instruction_o.result[CVA6Cfg.XLEN-1:0]  = imm_sb_type;
         instruction_o.use_imm = 1'b1;
       end
       UIMM: begin
-        instruction_o.result  = imm_u_type;
+        instruction_o.result[CVA6Cfg.XLEN-1:0]  = imm_u_type;
         instruction_o.use_imm = 1'b1;
       end
       JIMM: begin
-        instruction_o.result  = imm_uj_type;
+        instruction_o.result[CVA6Cfg.XLEN-1:0] = imm_uj_type;
         instruction_o.use_imm = 1'b1;
       end
       RS3: begin
         // result holds address of fp operand rs3
-        instruction_o.result  = {{CVA6Cfg.XLEN - 5{1'b0}}, instr.r4type.rs3};
+        instruction_o.result[CVA6Cfg.XLEN-1:0]  = {{CVA6Cfg.XLEN - 5{1'b0}}, instr.r4type.rs3};
         instruction_o.use_imm = 1'b0;
       end
+      EXTZ: begin
+        // sets zeros to the rest of the bits
+        instruction_o.result[CVA6Cfg.XLEN-1:0] = { {riscv::XLEN-12{1'b0}}, instruction_i[31:20]};
+        instruction_o.use_imm = 1'b1;
+      end
       default: begin
-        instruction_o.result  = {CVA6Cfg.XLEN{1'b0}};
+        instruction_o.result[CVA6Cfg.XLEN-1:0]  = {CVA6Cfg.XLEN{1'b0}};
         instruction_o.use_imm = 1'b0;
       end
     endcase
 
     if (CVA6Cfg.EnableAccelerator) begin
       if (is_accel) begin
-        instruction_o.result  = acc_instruction.result;
+        instruction_o.result[CVA6Cfg.XLEN-1:0]  = acc_instruction.result;
         instruction_o.use_imm = acc_instruction.use_imm;
       end
     end

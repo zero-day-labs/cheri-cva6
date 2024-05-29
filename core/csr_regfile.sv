@@ -15,6 +15,7 @@
 
 module csr_regfile
   import ariane_pkg::*;
+  import cva6_cheri_pkg::*;
 #(
     parameter config_pkg::cva6_cfg_t CVA6Cfg            = config_pkg::cva6_cfg_empty,
     parameter type                   exception_t        = logic,
@@ -39,7 +40,9 @@ module csr_regfile
     // Commit acknowledged a instruction -> increase instret CSR - COMMIT_STAGE
     input logic [CVA6Cfg.NrCommitPorts-1:0] commit_ack_i,
     // Address from which to start booting, mtvec is set to the same address - SUBSYSTEM
-    input logic [CVA6Cfg.VLEN-1:0] boot_addr_i,
+    //input logic [CVA6Cfg.VLEN-1:0] boot_addr_i,
+    // Boot Address from which to start booting, mtvec is set to the same address - SUBSYSTEM
+    input logic [CVA6Cfg.PCLEN-1:0] boot_addr_i,
     // Hart id in a multicore environment (reflected in a CSR) - SUBSYSTEM
     input logic [CVA6Cfg.XLEN-1:0] hart_id_i,
     // we are taking an exception
@@ -50,9 +53,9 @@ module csr_regfile
     // Address of the register to read/write - EX_STAGE
     input logic [11:0] csr_addr_i,
     // Write data in - COMMIT_STAGE
-    input logic [CVA6Cfg.XLEN-1:0] csr_wdata_i,
+    input logic [CVA6Cfg.REGLEN-1:0] csr_wdata_i,
     // Read data out - COMMIT_STAGE
-    output logic [CVA6Cfg.XLEN-1:0] csr_rdata_o,
+    output logic [CVA6Cfg.REGLEN-1:0] csr_rdata_o,
     // Mark the FP sate as dirty - COMMIT_STAGE
     input logic dirty_fp_state_i,
     // Write fflags register e.g.: we are retiring a floating point instruction - COMMIT_STAGE
@@ -60,15 +63,15 @@ module csr_regfile
     // Mark the V state as dirty - ACC_DISPATCHER
     input logic dirty_v_state_i,
     // PC of instruction accessing the CSR - COMMIT_STAGE
-    input logic [CVA6Cfg.VLEN-1:0] pc_i,
+    input logic [CVA6Cfg.PCLEN-1:0] pc_i,
     // attempts to access a CSR without appropriate privilege - COMMIT_STAGE
     output exception_t csr_exception_o,
     // Output the exception PC to PC Gen, the correct CSR (mepc, sepc) is set accordingly - FRONTEND
-    output logic [CVA6Cfg.VLEN-1:0] epc_o,
+    output logic [CVA6Cfg.REGLEN-1:0] epc_o,
     // Return from exception, set the PC of epc_o - FRONTEND
     output logic eret_o,
     // Output base of exception vector, correct CSR is output (mtvec, stvec) - FRONTEND
-    output logic [CVA6Cfg.VLEN-1:0] trap_vector_base_o,
+    output logic [CVA6Cfg.REGLEN-1:0] trap_vector_base_o,
     // Current privilege level the CPU is in - EX_STAGE
     output riscv::priv_lvl_t priv_lvl_o,
     // Current virtualization mode state the CPU is in - EX_STAGE
@@ -143,6 +146,8 @@ module csr_regfile
     output logic tsr_o,
     // hypervisor user mode - ID_STAGE
     output logic hu_o,
+     // Default Data Capability
+    output logic [CVA6Cfg.REGLEN-1:0] ddc_o,
     // we are in debug mode -> that will change some decoding - EX_STAGE
     output logic debug_mode_o,
     // we are in single-step mode - COMMIT_STAGE
@@ -197,8 +202,15 @@ module csr_regfile
   // internal signal to keep track of access exceptions
   logic read_access_exception, update_access_exception, privilege_violation;
   logic virtual_read_access_exception, virtual_update_access_exception, virtual_privilege_violation;
+  logic cheri_read_access_exception, cheri_update_access_exception, cheri_access_violation; 
   logic csr_we, csr_read;
   logic [CVA6Cfg.XLEN-1:0] csr_wdata, csr_rdata;
+  cva6_cheri_pkg::scr_reg_t    scr_addr;
+  logic        scr_we;
+  logic        scr_read;
+  cva6_cheri_pkg::cap_reg_t scr_wdata, scr_rdata;
+  cva6_cheri_pkg::addrw_t cap_offset;
+  cva6_cheri_pkg::cap_pcc_t pcc;
   riscv::priv_lvl_t trap_to_priv_lvl;
   logic             trap_to_v;
   // register for enabling load store address translation, this is critical, hence the register
@@ -219,6 +231,8 @@ module csr_regfile
   satp_t vsatp_q, vsatp_d;
   hgatp_t hgatp_q, hgatp_d;
   riscv::dcsr_t dcsr_q, dcsr_d;
+  cva6_cheri_pkg::cap_reg_t dpc_cap_q,   dpc_cap_d;
+  cva6_cheri_pkg::cap_meta_data_t dpc_cap_meta_data;
   riscv::csr_t csr_addr;
   riscv::csr_t conv_csr_addr;
   // privilege level register
@@ -243,6 +257,8 @@ module csr_regfile
   logic [CVA6Cfg.XLEN-1:0] mtval_q, mtval_d;
   logic [CVA6Cfg.XLEN-1:0] mtinst_q, mtinst_d;
   logic [CVA6Cfg.XLEN-1:0] mtval2_q, mtval2_d;
+  // CHERI: M-mode capability CSR
+  cva6_cheri_pkg::ccsr_t mccsr_q, mccsr_d;
   logic fiom_d, fiom_q;
 
   logic [CVA6Cfg.XLEN-1:0] stvec_q, stvec_d;
@@ -251,6 +267,7 @@ module csr_regfile
   logic [CVA6Cfg.XLEN-1:0] sepc_q, sepc_d;
   logic [CVA6Cfg.XLEN-1:0] scause_q, scause_d;
   logic [CVA6Cfg.XLEN-1:0] stval_q, stval_d;
+  cva6_cheri_pkg::ccsr_t sccsr_q, sccsr_d;
 
   logic [CVA6Cfg.XLEN-1:0] hedeleg_q, hedeleg_d;
   logic [CVA6Cfg.XLEN-1:0] hideleg_q, hideleg_d;
@@ -297,6 +314,9 @@ module csr_regfile
   assign pmpcfg_o  = pmpcfg_q[15:0];
   assign pmpaddr_o = pmpaddr_q;
 
+  assign dpc_cap_meta_data = get_cap_reg_meta_data(dpc_cap_q);
+  assign  pcc = cva6_cheri_pkg::cap_pcc_t'(pc_i);
+
   riscv::fcsr_t fcsr_q, fcsr_d;
   // ----------------
   // Assignments
@@ -305,6 +325,7 @@ module csr_regfile
   assign conv_csr_addr = (CVA6Cfg.RVH) ? riscv::convert_vs_access_csr(
       (riscv::csr_t'(csr_addr_i)), v_q
   ) : csr_addr;
+  assign scr_addr = scr_reg_t'(csr_addr_i[4:0]);
   assign fs_o = mstatus_q.fs;
   assign vfs_o = (CVA6Cfg.RVH) ? vsstatus_q.fs : riscv::Off;
   assign vs_o = mstatus_q.vs;
@@ -322,6 +343,125 @@ module csr_regfile
   end else begin
     assign vsstatus_extended = '0;
   end
+
+  // ----------------
+    // SCRs
+    // ----------------
+
+    // Logic to read and write to cap CSRs:
+    // 1) operation read must return the capability offset;
+    // 2) operation write must set the capability offset;
+
+    addrw_t rd_cap_csr_offset;
+    cva6_cheri_pkg::cap_reg_t wr_cap_csr_result;
+
+    always_comb begin : csr_read_cap_offset
+        automatic cva6_cheri_pkg::cap_reg_t rd_cap;
+        automatic cva6_cheri_pkg::cap_meta_data_t rd_cap_meta_data;
+        rd_cap = mepcc_q;
+        rd_cap_csr_offset = '0;
+        if (csr_read) begin
+            unique case (csr_addr.address)
+                riscv::CSR_MEPC: begin
+                    rd_cap = mepcc_q;
+                end
+                riscv::CSR_MTVEC: begin
+                    rd_cap = mtcc_q;
+                end
+                riscv::CSR_SEPC: begin
+                    rd_cap = sepcc_q;
+                end
+                riscv::CSR_STVEC: begin
+                    rd_cap = stcc_q;
+                end
+            endcase
+        end
+        rd_cap_csr_offset = get_cap_reg_offset(rd_cap,rd_cap_meta_data);
+    end
+
+    always_comb begin : csr_write_cap_offset
+        automatic cva6_cheri_pkg::cap_reg_t wr_cap;
+        automatic cva6_cheri_pkg::cap_meta_data_t wr_cap_meta_data;
+        automatic cva6_cheri_pkg::addrw_t wr_cap_offset;
+        automatic cva6_cheri_pkg::addrw_t wr_cap_base;
+        automatic cva6_cheri_pkg::addrw_t wr_cap_addr;
+
+        cap_offset = '0;
+        wr_cap_base = '0;
+        wr_cap     = mepcc_q;
+        if (csr_we) begin
+            unique case (csr_addr.address)
+                riscv::CSR_MEPC: begin
+                    wr_cap_offset  = {csr_wdata[riscv::XLEN-1:1], 1'b0};
+                    wr_cap = mepcc_q;
+                end
+                riscv::CSR_MTVEC: begin
+                    wr_cap_offset  = {csr_wdata[riscv::XLEN-1:2], 1'b0, csr_wdata[0]};
+                    // we are in vector mode, this implementation requires the additional
+                    // alignment constraint of 64 * 4 bytes
+                    if (csr_wdata[0]) begin
+                        //mtvec_d    = {csr_wdata[riscv::XLEN-1:8], 7'b0, csr_wdata[0]};
+                        wr_cap_offset = {csr_wdata[riscv::XLEN-1:8], 7'b0, csr_wdata[0]};
+                    end
+                    wr_cap = mtcc_q;
+                end
+                riscv::CSR_SEPC: begin
+                    wr_cap_offset  = {csr_wdata[riscv::XLEN-1:1], 1'b0};
+                    wr_cap = sepcc_q;
+                end
+                riscv::CSR_STVEC: begin
+                    wr_cap_offset  = {csr_wdata[riscv::XLEN-1:2], 1'b0, csr_wdata[0]};
+                    // we are in vector mode, this implementation requires the additional
+                    // alignment constraint of 64 * 4 bytes
+                    if (csr_wdata[0]) begin
+                        wr_cap_offset = {csr_wdata[riscv::XLEN-1:8], 7'b0, csr_wdata[0]};
+                    end
+                    wr_cap = stcc_q;
+                end
+            endcase
+        end
+        wr_cap_meta_data = get_cap_reg_meta_data(wr_cap);
+        wr_cap_base      = get_cap_reg_base(wr_cap,wr_cap_meta_data);
+        wr_cap_addr      = wr_cap_base + wr_cap_offset;
+        wr_cap_csr_result = set_cap_reg_address(wr_cap, wr_cap_addr, wr_cap_meta_data);
+        // if not representable set capability to NULL
+        if (!wr_cap_csr_result.tag) begin
+            wr_cap_csr_result = REG_NULL_CAP;
+            wr_cap_csr_result.addr = wr_cap_addr;
+        end
+
+        // if capibility is selead just clear the tag bit
+        if(wr_cap.otype != UNSEALED_CAP )
+            wr_cap_csr_result.tag = 1'b0;
+    end
+
+    // Default data capability
+    cap_pcc_t pcc_d, pcc_q;
+    cap_reg_t ddc_d, ddc_q;
+
+    // User mode SCRs
+    cap_reg_t utcc_q, utcc_d;
+    cap_reg_t utdc_q, utdc_d;
+    cap_reg_t uscratchc_q, uscratchc_d;
+    cap_reg_t uepcc_q, uepcc_d;
+
+    // TODO: Virtual Supervisor mode SCRs
+    cap_reg_t vstcc_q, vstcc_d;
+    cap_reg_t vstdc_q, vstdc_d;
+    cap_reg_t vsscratchc_q, vsscratchc_d;
+    cap_reg_t vsepcc_q, vsepcc_d;
+
+    // Supervisor mode SCRs
+    cap_reg_t stcc_q, stcc_d;
+    cap_reg_t stdc_q, stdc_d;
+    cap_reg_t sscratchc_q, sscratchc_d;
+    cap_reg_t sepcc_q, sepcc_d;
+
+    // Machine mode SCRs
+    cap_reg_t mtcc_q, mtcc_d;
+    cap_reg_t mtdc_q, mtdc_d;
+    cap_reg_t mscratchc_q, mscratchc_d;
+    cap_reg_t mepcc_q, mepcc_d;
 
   always_comb begin : csr_read_process
     // a read access exception can only occur if we attempt to read a CSR which does not exist
@@ -429,7 +569,11 @@ module csr_regfile
           csr_rdata = (CVA6Cfg.RVH) ? mip_q & mideleg_q & ~HS_DELEG_INTERRUPTS[CVA6Cfg.XLEN-1:0] : mip_q & mideleg_q;
         else read_access_exception = 1'b1;
         riscv::CSR_STVEC:
-        if (CVA6Cfg.RVS) csr_rdata = stvec_q;
+        // TODO cheri: implement tvec capability logic
+        // Change TVEC offset for address rd_cap_csr_offset -> stcc_q.addr
+        // CHERI version 9 Cambridge sets the offset here
+        // 1. Remove stvec_q later and use always the capability
+        if (CVA6Cfg.RVS) csr_rdata = (pcc.flags.cap_mode && CVA6Cfg.CheriPresent) ? stcc_d : {{CVA6Cfg.REGLEN-CVA6Cfg.XLEN{1'b0}},stvec_q};
         else read_access_exception = 1'b1;
         riscv::CSR_SCOUNTEREN:
         if (CVA6Cfg.RVS) csr_rdata = scounteren_q;
@@ -438,7 +582,11 @@ module csr_regfile
         if (CVA6Cfg.RVS) csr_rdata = sscratch_q;
         else read_access_exception = 1'b1;
         riscv::CSR_SEPC:
-        if (CVA6Cfg.RVS) csr_rdata = sepc_q;
+        // TODO cheri: implement epc capability logic
+        // Change EPC offset for address rd_cap_csr_offset -> sepcc_q.addr
+        // CHERI version 9 Cambridge sets the offset here
+        // 1. Remove sepc_q later and use always the capability
+        if (CVA6Cfg.RVS) csr_rdata = (pcc.flags.cap_mode && CVA6Cfg.CheriPresent) ? sepcc_q : sepc_q;
         else read_access_exception = 1'b1;
         riscv::CSR_SCAUSE:
         if (CVA6Cfg.RVS) csr_rdata = scause_q;
@@ -461,6 +609,7 @@ module csr_regfile
         riscv::CSR_SENVCFG:
         if (CVA6Cfg.RVS) csr_rdata = '0 | fiom_q;
         else read_access_exception = 1'b1;
+        riscv::CSR_SCCSR: csr_rdata = {sccsr_q[CVA6Cfg.XLEN-1:1],CVA6Cfg.CheriPresent};
         // hypervisor mode registers
         riscv::CSR_HSTATUS:
         if (CVA6Cfg.RVH) csr_rdata = hstatus_q[CVA6Cfg.XLEN-1:0];
@@ -524,10 +673,10 @@ module csr_regfile
         if (CVA6Cfg.RVS) csr_rdata = mideleg_q;
         else read_access_exception = 1'b1;
         riscv::CSR_MIE: csr_rdata = mie_q;
-        riscv::CSR_MTVEC: csr_rdata = mtvec_q;
+        riscv::CSR_MTVEC: csr_rdata = (CVA6Cfg.CheriPresent) ? rd_cap_csr_offset : mtvec_q;
         riscv::CSR_MCOUNTEREN: csr_rdata = mcounteren_q;
         riscv::CSR_MSCRATCH: csr_rdata = mscratch_q;
-        riscv::CSR_MEPC: csr_rdata = mepc_q;
+        riscv::CSR_MEPC: csr_rdata = (CVA6Cfg.CheriPresent) ? rd_cap_csr_offset : mepc_q;
         riscv::CSR_MCAUSE: csr_rdata = mcause_q;
         riscv::CSR_MTVAL: csr_rdata = mtval_q;
         riscv::CSR_MTINST:
@@ -541,6 +690,7 @@ module csr_regfile
           if (CVA6Cfg.RVU) csr_rdata = '0 | fiom_q;
           else read_access_exception = 1'b1;
         end
+        riscv::CSR_MCCSR:              csr_rdata = {mccsr_q[CVA6Cfg.XLEN-1:1],CVA6Cfg.CheriPresent};
         riscv::CSR_MENVCFGH: begin
           if (CVA6Cfg.RVU && CVA6Cfg.XLEN == 32) csr_rdata = '0;
           else read_access_exception = 1'b1;
@@ -780,6 +930,136 @@ module csr_regfile
       endcase
     end
   end
+
+  always_comb begin : scr_read_process
+        // a read access exception can only occur if we attempt to read a CSR which does not exist
+        cheri_read_access_exception = 1'b0;
+        scr_rdata                   = REG_NULL_CAP;
+        if (scr_read) begin
+            unique case (scr_addr)
+                    cva6_cheri_pkg::SCR_PCC: begin
+                        scr_rdata = cap_pcc_to_cap_reg(pcc);
+                    end
+                    cva6_cheri_pkg::SCR_DDC: begin
+                        scr_rdata = ddc_q;
+                    end
+                    cva6_cheri_pkg::SCR_UTCC: begin
+                        scr_rdata = utcc_q;
+                    end
+                    cva6_cheri_pkg::SCR_UTDC: begin
+                        scr_rdata = utdc_q;
+                    end
+                    cva6_cheri_pkg::SCR_USCRATCHC: begin
+                        scr_rdata = uscratchc_q;
+                    end
+                    cva6_cheri_pkg::SCR_UEPCC: begin
+                        scr_rdata = sepcc_q;
+                    end
+                    cva6_cheri_pkg::SCR_STCC: begin
+                        scr_rdata = stcc_q;
+                    end
+                    cva6_cheri_pkg::SCR_STDC: begin
+                        scr_rdata = stdc_q;
+                    end
+                    cva6_cheri_pkg::SCR_SSCRATCHC: begin
+                        scr_rdata = sscratchc_q;
+                    end
+                    cva6_cheri_pkg::SCR_SEPCC: begin
+                        scr_rdata = sepcc_q;
+                    end
+                    cva6_cheri_pkg::SCR_MTCC: begin
+                        scr_rdata = mtcc_q;
+                    end
+                    cva6_cheri_pkg::SCR_MTDC: begin
+                        scr_rdata = mtdc_q;
+                    end
+                    cva6_cheri_pkg::SCR_MSCRATCHC: begin
+                        scr_rdata = mscratchc_q;
+                    end
+                    cva6_cheri_pkg::SCR_MEPCC: begin
+                        scr_rdata = mepcc_q;
+                    end
+                    default: begin
+                        cheri_read_access_exception = 1'b1;
+                    end
+            endcase
+        end
+    end
+
+    // ------------------------------------------
+    // CHERI CSRs as SRCs
+    // ------------------------------------------
+    //assign cap_set_offset = cap_inc_offset(cap_sel, cap_offset, 1'b0);
+    always_comb begin : scr_update_process
+        scr_wdata   = csr_wdata_i;
+        // a read access exception can only occur if we attempt to read a CSR which does not exist
+        cheri_update_access_exception = 1'b0;
+        ddc_d       = ddc_q;
+        // utcc_d      = utcc_q;
+        // utdc_d      = utdc_q;
+        // uscratchc_d = uscratchc_q;
+        sepcc_d     = sepcc_q;
+        stcc_d      = stcc_q;
+        stdc_d      = stdc_q;
+        sscratchc_d = sscratchc_q;
+
+        if (mtvec_rst_load_q) begin
+            mtcc_d = cap_pcc_to_cap_reg(boot_addr_i);
+            mtcc_d.addr = boot_addr_i[CVA6Cfg.XLEN-1:0] + 'h40;
+        end else begin
+            mtcc_d      = mtcc_q;
+        end
+        mtdc_d      = mtdc_q;
+        mscratchc_d = mscratchc_q;
+        mepcc_d     = mepcc_q;
+
+        if(scr_we) begin
+            unique case (scr_addr)
+                    cva6_cheri_pkg::SCR_DDC: begin
+                        ddc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_UTCC: begin
+                        utcc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_UTDC: begin
+                        utdc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_USCRATCHC: begin
+                        uscratchc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_UEPCC: begin
+                        sepcc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_STCC: begin
+                        stcc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_STDC: begin
+                        stdc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_SSCRATCHC: begin
+                        sscratchc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_SEPCC: begin
+                        sepcc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_MTCC: begin
+                        mtcc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_MTDC: begin
+                        mtdc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_MSCRATCHC: begin
+                        mscratchc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_MEPCC: begin
+                        mepcc_d = scr_wdata;
+                    end
+                    default: begin
+                        cheri_update_access_exception = 1'b1;
+                    end
+            endcase
+        end
+    end
   // ---------------------------
   // CSR Write and update logic
   // ---------------------------
@@ -833,6 +1113,7 @@ module csr_regfile
     debug_mode_d                    = debug_mode_q;
     dcsr_d                          = dcsr_q;
     dpc_d                           = dpc_q;
+    dpc_cap_d               = dpc_cap_q;
     dscratch0_d                     = dscratch0_q;
     dscratch1_d                     = dscratch1_q;
     mstatus_d                       = mstatus_q;
@@ -846,7 +1127,7 @@ module csr_regfile
     // boot_addr_i will be assigned a constant
     // on the top-level.
     if (mtvec_rst_load_q) begin
-      mtvec_d = {{CVA6Cfg.XLEN - CVA6Cfg.VLEN{1'b0}}, boot_addr_i} + 'h40;
+      mtvec_d = {{CVA6Cfg.XLEN - CVA6Cfg.VLEN{1'b0}}, boot_addr_i[CVA6Cfg.VLEN-1:0]} + 'h40;
     end else begin
       mtvec_d = mtvec_q;
     end
@@ -862,6 +1143,7 @@ module csr_regfile
     mtval_d                  = mtval_q;
     mtinst_d                 = mtinst_q;
     mtval2_d                 = mtval2_q;
+    mccsr_d                 = mccsr_q;
     fiom_d                   = fiom_q;
     dcache_d                 = dcache_q;
     icache_d                 = icache_q;
@@ -882,6 +1164,7 @@ module csr_regfile
     sscratch_d               = sscratch_q;
     stval_d                  = stval_q;
     satp_d                   = satp_q;
+    sccsr_d                 = sccsr_q;
     hedeleg_d                = hedeleg_q;
     hideleg_d                = hideleg_q;
     hgeie_d                  = hgeie_q;
@@ -1085,7 +1368,7 @@ module csr_regfile
         end
 
         riscv::CSR_STVEC:
-        if (CVA6Cfg.RVS) stvec_d = {csr_wdata[CVA6Cfg.XLEN-1:2], 1'b0, csr_wdata[0]};
+        if (CVA6Cfg.RVS) stcc_d                 =  wr_cap_csr_result;//stvec_d = {csr_wdata[CVA6Cfg.XLEN-1:2], 1'b0, csr_wdata[0]};
         else update_access_exception = 1'b1;
         riscv::CSR_SCOUNTEREN:
         if (CVA6Cfg.RVS) scounteren_d = {{CVA6Cfg.XLEN - 32{1'b0}}, csr_wdata[31:0]};
@@ -1094,7 +1377,7 @@ module csr_regfile
         if (CVA6Cfg.RVS) sscratch_d = csr_wdata;
         else update_access_exception = 1'b1;
         riscv::CSR_SEPC:
-        if (CVA6Cfg.RVS) sepc_d = {csr_wdata[CVA6Cfg.XLEN-1:1], 1'b0};
+        if (CVA6Cfg.RVS) sepcc_d                =  wr_cap_csr_result; //sepc_d = {csr_wdata[CVA6Cfg.XLEN-1:1], 1'b0};
         else update_access_exception = 1'b1;
         riscv::CSR_SCAUSE:
         if (CVA6Cfg.RVS) scause_d = csr_wdata;
@@ -1126,6 +1409,7 @@ module csr_regfile
         riscv::CSR_SENVCFG:
         if (CVA6Cfg.RVU) fiom_d = csr_wdata[0];
         else update_access_exception = 1'b1;
+        riscv::CSR_SCCSR: sccsr_d = csr_wdata;
         //hypervisor mode registers
         riscv::CSR_HSTATUS: begin
           if (CVA6Cfg.RVH) begin
@@ -1336,10 +1620,11 @@ module csr_regfile
         end
 
         riscv::CSR_MTVEC: begin
-          mtvec_d = {csr_wdata[CVA6Cfg.XLEN-1:2], 1'b0, csr_wdata[0]};
+          //mtvec_d = {csr_wdata[CVA6Cfg.XLEN-1:2], 1'b0, csr_wdata[0]};
           // we are in vector mode, this implementation requires the additional
           // alignment constraint of 64 * 4 bytes
-          if (csr_wdata[0]) mtvec_d = {csr_wdata[CVA6Cfg.XLEN-1:8], 7'b0, csr_wdata[0]};
+          //if (csr_wdata[0]) mtvec_d = {csr_wdata[CVA6Cfg.XLEN-1:8], 7'b0, csr_wdata[0]};
+          mtcc_d                 =  wr_cap_csr_result;
         end
         riscv::CSR_MCOUNTEREN: begin
           if (CVA6Cfg.RVU) mcounteren_d = {{CVA6Cfg.XLEN - 32{1'b0}}, csr_wdata[31:0]};
@@ -1347,7 +1632,7 @@ module csr_regfile
         end
 
         riscv::CSR_MSCRATCH: mscratch_d = csr_wdata;
-        riscv::CSR_MEPC: mepc_d = {csr_wdata[CVA6Cfg.XLEN-1:1], 1'b0};
+        riscv::CSR_MEPC: mepcc_d                =  wr_cap_csr_result;//mepc_d = {csr_wdata[CVA6Cfg.XLEN-1:1], 1'b0};
         riscv::CSR_MCAUSE: mcause_d = csr_wdata;
         riscv::CSR_MTVAL: begin
           if (CVA6Cfg.TvalEn) mtval_d = csr_wdata;
@@ -1378,6 +1663,7 @@ module csr_regfile
         riscv::CSR_MENVCFGH: begin
           if (!CVA6Cfg.RVU || CVA6Cfg.XLEN != 32) update_access_exception = 1'b1;
         end
+        riscv::CSR_MCCSR: mccsr_d = csr_wdata;
         riscv::CSR_MCOUNTINHIBIT:
         if (CVA6Cfg.PerfCounterEn)
           mcountinhibit_d = {csr_wdata[MHPMCounterNum+2:2], 1'b0, csr_wdata[0]};
@@ -1687,7 +1973,8 @@ module csr_regfile
           // set cause
           scause_d = ex_i.cause;
           // set epc
-          sepc_d = {{CVA6Cfg.XLEN - CVA6Cfg.VLEN{pc_i[CVA6Cfg.VLEN-1]}}, pc_i};
+          sepcc_d        = cap_pcc_to_cap_reg(pcc);
+          //sepc_d = {{CVA6Cfg.XLEN - CVA6Cfg.VLEN{pc_i[CVA6Cfg.VLEN-1]}}, pc_i};
           // set mtval or stval
           stval_d        = (ariane_pkg::ZERO_TVAL
                                   && (ex_i.cause inside {
@@ -1725,7 +2012,8 @@ module csr_regfile
         mstatus_d.mpp = priv_lvl_q;
         mcause_d = ex_i.cause;
         // set epc
-        mepc_d = {{CVA6Cfg.XLEN - CVA6Cfg.VLEN{pc_i[CVA6Cfg.VLEN-1]}}, pc_i};
+        mepcc_d        = cap_pcc_to_cap_reg(pcc);
+        //mepc_d = {{CVA6Cfg.XLEN - CVA6Cfg.VLEN{pc_i[CVA6Cfg.VLEN-1]}}, pc_i};
         // set mtval or stval
         if (CVA6Cfg.TvalEn) begin
           mtval_d        = (ariane_pkg::ZERO_TVAL
@@ -1809,7 +2097,8 @@ module csr_regfile
           default: ;
         endcase
         // save PC of next this instruction e.g.: the next one to be executed
-        dpc_d = {{CVA6Cfg.XLEN - CVA6Cfg.VLEN{pc_i[CVA6Cfg.VLEN-1]}}, pc_i};
+        dpc_d = {{CVA6Cfg.XLEN - CVA6Cfg.VLEN{pc_i[CVA6Cfg.VLEN-1]}}, pc_i[CVA6Cfg.VLEN-1:0]};
+        dpc_cap_d = cap_reg_to_cap_pcc(pcc);
         dcsr_d.cause = ariane_pkg::CauseBreakpoint;
       end
 
@@ -1818,7 +2107,8 @@ module csr_regfile
         dcsr_d.prv = priv_lvl_o;
         dcsr_d.v = (!CVA6Cfg.RVH) ? 1'b0 : v_q;
         // save the PC
-        dpc_d = {{CVA6Cfg.XLEN - CVA6Cfg.VLEN{pc_i[CVA6Cfg.VLEN-1]}}, pc_i};
+        dpc_d = {{CVA6Cfg.XLEN - CVA6Cfg.VLEN{pc_i[CVA6Cfg.VLEN-1]}}, pc_i[CVA6Cfg.VLEN-1:0]};
+        dpc_cap_d = cap_reg_to_cap_pcc(pcc);
         // enter debug mode
         debug_mode_d = 1'b1;
         // jump to the base address
@@ -1835,21 +2125,24 @@ module csr_regfile
         if (commit_instr_i[0].fu == CTRL_FLOW) begin
           // we saved the correct target address during execute
           dpc_d = {
-            {CVA6Cfg.XLEN - CVA6Cfg.VLEN{commit_instr_i[0].bp.predict_address[CVA6Cfg.VLEN-1]}},
+            {CVA6Cfg.XLEN - CVA6Cfg.VLEN{commit_instr_i[0].bp.predict_address}},
             commit_instr_i[0].bp.predict_address
           };
           // exception valid
         end else if (ex_i.valid) begin
-          dpc_d = {{CVA6Cfg.XLEN - CVA6Cfg.VLEN{1'b0}}, trap_vector_base_o};
+          dpc_d = {{CVA6Cfg.XLEN - CVA6Cfg.VLEN{1'b0}}, trap_vector_base_o[CVA6Cfg.VLEN-1:0]};
+          dpc_cap_d = trap_vector_base_o;
           // return from environment
         end else if (eret_o) begin
-          dpc_d = {{CVA6Cfg.XLEN - CVA6Cfg.VLEN{1'b0}}, epc_o};
+          dpc_d = {{CVA6Cfg.XLEN - CVA6Cfg.VLEN{1'b0}}, epc_o[CVA6Cfg.VLEN-1:0]};
+          dpc_cap_d = epc_o;
           // consecutive PC
         end else begin
           dpc_d = {
-            {CVA6Cfg.XLEN - CVA6Cfg.VLEN{commit_instr_i[0].pc[CVA6Cfg.VLEN-1]}},
+            {CVA6Cfg.XLEN - CVA6Cfg.VLEN{commit_instr_i[0].pc[CVA6Cfg.VLEN-1:0][CVA6Cfg.VLEN-1]}},
             commit_instr_i[0].pc + (commit_instr_i[0].is_compressed ? 'h2 : 'h4)
           };
+          dpc_cap_d = cap_reg_to_cap_pcc(commit_instr_i[0].pc);
         end
         debug_mode_d   = 1'b1;
         set_debug_pc_o = 1'b1;
@@ -1989,7 +2282,7 @@ module csr_regfile
   // CSR OP Select Logic
   // ---------------------------
   always_comb begin : csr_op_logic
-    csr_wdata = csr_wdata_i;
+    csr_wdata[CVA6Cfg.XLEN-1:0] = csr_wdata_i;
     csr_we    = 1'b1;
     csr_read  = 1'b1;
     mret      = 1'b0;
@@ -1997,9 +2290,9 @@ module csr_regfile
     dret      = 1'b0;
 
     unique case (csr_op_i)
-      CSR_WRITE: csr_wdata = csr_wdata_i;
-      CSR_SET:   csr_wdata = csr_wdata_i | csr_rdata;
-      CSR_CLEAR: csr_wdata = (~csr_wdata_i) & csr_rdata;
+      CSR_WRITE: csr_wdata = csr_wdata_i[CVA6Cfg.XLEN-1:0];
+      CSR_SET:   csr_wdata = csr_wdata_i[CVA6Cfg.XLEN-1:0] | csr_rdata;
+      CSR_CLEAR: csr_wdata = (~csr_wdata_i[CVA6Cfg.XLEN-1:0]) & csr_rdata;
       CSR_READ:  csr_we = 1'b0;
       MRET: begin
         // the return should not have any write or read side-effects
@@ -2030,6 +2323,28 @@ module csr_regfile
       csr_read = 1'b0;
     end
   end
+
+  // ---------------------------
+    // SSR OP Select Logic
+    // ---------------------------
+    always_comb begin : scr_op_logic
+        scr_we    = 1'b0;
+        scr_read  = 1'b1;
+
+        unique case (csr_op_i)
+            SCR_READ: scr_we         = 1'b0;
+            SCR_READWRITE: scr_we    = 1'b1;
+            default: begin
+                scr_we   = 1'b0;
+                scr_read = 1'b0;
+            end
+        endcase
+        // if we are violating our privilges or system registers access is no permited (PCC.ACCESS_SYS_REGS == 0)
+        if (privilege_violation || cheri_access_violation) begin
+            scr_we   = 1'b0;
+            scr_read = 1'b0;
+        end
+    end
 
   assign irq_ctrl_o.mie = mie_q;
   assign irq_ctrl_o.mip = mip_q;
@@ -2116,13 +2431,41 @@ module csr_regfile
       end
     end
   end
+  // CHERI: check for system registers privilege violation
+    always_comb begin : cheri_sys_regs_check
+
+        cheri_access_violation = 1'b0;
+
+        if (csr_op_i inside {CSR_WRITE, CSR_SET, CSR_CLEAR, CSR_READ}) begin
+            if(!pcc.hperms.access_sys_regs) begin
+                cheri_access_violation = 1'b1;
+            end
+            // check for system registers access violation using a whitelist approach
+            // check if we are acessing a HPM registers
+            if (csr_addr_i inside {[riscv::CSR_CYCLE:riscv::CSR_HPM_COUNTER_31]}) begin
+                cheri_access_violation = 1'b0;
+            end
+            // check if we are acessing floating-point registers
+            if (csr_addr_i inside {[riscv::CSR_FFLAGS:riscv::CSR_FCSR]}) begin
+                cheri_access_violation = 1'b0;
+            end
+        end
+        if (csr_op_i inside {SCR_READ, SCR_READWRITE}) begin
+            if(!pcc.hperms.access_sys_regs) begin
+                cheri_access_violation = 1'b1;
+            end
+        end
+    end
+
   // ----------------------
   // CSR Exception Control
   // ----------------------
   always_comb begin : exception_ctrl
+    automatic cva6_cheri_pkg::cap_tval_t cheri_tval;
     csr_exception_o = {
       {CVA6Cfg.XLEN{1'b0}}, {CVA6Cfg.XLEN{1'b0}}, {CVA6Cfg.GPLEN{1'b0}}, {32{1'b0}}, 1'b0, 1'b0
     };
+    cheri_tval = '{default: 0};
     // ----------------------------------
     // Illegal Access (decode exception)
     // ----------------------------------
@@ -2144,6 +2487,20 @@ module csr_regfile
       csr_exception_o.cause = riscv::VIRTUAL_INSTRUCTION;
       csr_exception_o.valid = 1'b1;
     end
+    if (cheri_update_access_exception || cheri_read_access_exception ) begin
+            csr_exception_o.cause = riscv::ILLEGAL_INSTR;
+            csr_exception_o.valid = 1'b1;
+        end
+
+        if (cheri_access_violation) begin
+            // Violation of access system registers when accessing SCR sets tval msb bit to 1 
+            // and encodes the SCR registers on the LSB [4:0]
+            cheri_tval.cap_idx    = {5'b10000, scr_addr};
+            cheri_tval.cause      = cva6_cheri_pkg::CAP_PERM_ACCESS_SYS_REGS;
+            csr_exception_o.cause = cva6_cheri_pkg::CAP_EXCEPTION;
+            csr_exception_o.tval  = cheri_tval;
+            csr_exception_o.valid = 1'b1;
+        end
   end
 
   // -------------------
@@ -2165,15 +2522,16 @@ module csr_regfile
 
   // output assignments dependent on privilege mode
   always_comb begin : priv_output
-    trap_vector_base_o = {mtvec_q[CVA6Cfg.VLEN-1:2], 2'b0};
+    // trap_vector_base_o = {mtvec_q[CVA6Cfg.VLEN-1:2], 2'b0};
+    trap_vector_base_o = mtcc_q;
     // output user mode stvec
     if (CVA6Cfg.RVS && trap_to_priv_lvl == riscv::PRIV_LVL_S) begin
-      trap_vector_base_o = (CVA6Cfg.RVH && trap_to_v) ? {vstvec_q[CVA6Cfg.VLEN-1:2], 2'b0} : {stvec_q[CVA6Cfg.VLEN-1:2], 2'b0};
+      trap_vector_base_o = (CVA6Cfg.RVH && trap_to_v) ? {vstvec_q[CVA6Cfg.VLEN-1:2], 2'b0} : stcc_q /*{stvec_q[CVA6Cfg.VLEN-1:2], 2'b0}*/;
     end
 
     // if we are in debug mode jump to a specific address
     if (CVA6Cfg.DebugEn && debug_mode_q) begin
-      trap_vector_base_o = CVA6Cfg.DmBaseAddress[CVA6Cfg.VLEN-1:0] + CVA6Cfg.ExceptionAddress[CVA6Cfg.VLEN-1:0];
+      trap_vector_base_o[CVA6Cfg.VLEN-1:0] = CVA6Cfg.DmBaseAddress[CVA6Cfg.VLEN-1:0] + CVA6Cfg.ExceptionAddress[CVA6Cfg.VLEN-1:0];
     end
 
     // check if we are in vectored mode, if yes then do BASE + 4 * cause we
@@ -2191,14 +2549,15 @@ module csr_regfile
       trap_vector_base_o[7:2] = {ex_i.cause[5:2], 2'b01};
     end
 
-    epc_o = mepc_q[CVA6Cfg.VLEN-1:0];
+    epc_o = mepcc_q; //mepc_q[CVA6Cfg.VLEN-1:0];
     // we are returning from supervisor or virtual supervisor mode, so take the sepc register
     if (CVA6Cfg.RVS && sret) begin
-      epc_o = (CVA6Cfg.RVH && v_q) ? vsepc_q[CVA6Cfg.VLEN-1:0] : sepc_q[CVA6Cfg.VLEN-1:0];
+      epc_o = (CVA6Cfg.RVH && v_q) ? vsepc_q[CVA6Cfg.VLEN-1:0] : sepcc_q; //sepc_q[CVA6Cfg.VLEN-1:0];
     end
     // we are returning from debug mode, to take the dpc register
     if (CVA6Cfg.DebugEn && dret) begin
-      epc_o = dpc_q[CVA6Cfg.VLEN-1:0];
+      //epc_o = dpc_q[CVA6Cfg.VLEN-1:0];
+      epc_o =  set_cap_reg_address(dpc_cap_q, dpc_q, dpc_cap_meta_data);
     end
   end
 
@@ -2209,15 +2568,20 @@ module csr_regfile
     // When the SEIP bit is read with a CSRRW, CSRRS, or CSRRC instruction, the value
     // returned in the rd destination register contains the logical-OR of the software-writable
     // bit and the interrupt signal from the interrupt controller.
-    csr_rdata_o = csr_rdata;
+    csr_rdata_o = (CVA6Cfg.CheriPresent) ? cva6_cheri_pkg::REG_NULL_CAP : '0;
+    if(CVA6Cfg.CheriPresent && csr_op_i inside {SCR_READ, SCR_READWRITE}) begin
+        csr_rdata_o = scr_rdata;
+    end else begin
+        csr_rdata_o[CVA6Cfg.XLEN-1:0] = csr_rdata;
+    end
 
     unique case (conv_csr_addr.address)
       riscv::CSR_MIP:
-      csr_rdata_o = csr_rdata | ({{CVA6Cfg.XLEN - 1{1'b0}}, irq_i[1]} << riscv::IRQ_S_EXT);
+      csr_rdata_o[CVA6Cfg.XLEN-1:0] = csr_rdata | ({{CVA6Cfg.XLEN - 1{1'b0}}, irq_i[1]} << riscv::IRQ_S_EXT);
       // in supervisor mode we also need to check whether we delegated this bit
       riscv::CSR_SIP: begin
         if (CVA6Cfg.RVS) begin
-          csr_rdata_o = csr_rdata
+          csr_rdata_o[CVA6Cfg.XLEN-1:0] = csr_rdata
                               | ({{CVA6Cfg.XLEN-1{1'b0}}, (irq_i[1] & mideleg_q[riscv::IRQ_S_EXT])} << riscv::IRQ_S_EXT);
         end
       end
@@ -2242,6 +2606,7 @@ module csr_regfile
   assign sum_o = mstatus_q.sum;
   assign vs_sum_o = CVA6Cfg.RVH ? vsstatus_q.sum : '0;
   assign hu_o = CVA6Cfg.RVH ? hstatus_q.hu : '0;
+  assign ddc_o            = ddc_q;
   // we support bare memory addressing and SV39
   if (CVA6Cfg.RVH) begin
     assign en_translation_o = (((config_pkg::vm_mode_t'(satp_q.mode) == CVA6Cfg.MODE_SV && !v_q) || (config_pkg::vm_mode_t'(vsatp_q.mode) == CVA6Cfg.MODE_SV && v_q)) &&
@@ -2293,6 +2658,7 @@ module csr_regfile
         dcsr_q.prv       <= riscv::PRIV_LVL_M;
         dcsr_q.xdebugver <= 4'h4;
         dpc_q            <= '0;
+        dpc_cap_q              <=REG_NULL_CAP;
         dscratch0_q      <= {CVA6Cfg.XLEN{1'b0}};
         dscratch1_q      <= {CVA6Cfg.XLEN{1'b0}};
       end
@@ -2308,6 +2674,7 @@ module csr_regfile
       mcounteren_q     <= {CVA6Cfg.XLEN{1'b0}};
       mscratch_q       <= {CVA6Cfg.XLEN{1'b0}};
       mtval_q          <= {CVA6Cfg.XLEN{1'b0}};
+      mccsr_q                <= {CVA6Cfg.XLEN{1'b0}};
       fiom_q           <= '0;
       dcache_q         <= {{CVA6Cfg.XLEN - 1{1'b0}}, 1'b1};
       icache_q         <= {{CVA6Cfg.XLEN - 1{1'b0}}, 1'b1};
@@ -2324,6 +2691,7 @@ module csr_regfile
         sscratch_q   <= {CVA6Cfg.XLEN{1'b0}};
         stval_q      <= {CVA6Cfg.XLEN{1'b0}};
         satp_q       <= {CVA6Cfg.XLEN{1'b0}};
+        sccsr_q      <= {CVA6Cfg.XLEN{1'b0}};
       end
 
       if (CVA6Cfg.RVH) begin
@@ -2365,6 +2733,19 @@ module csr_regfile
           pmpaddr_q[i] <= '0;
         end
       end
+      ddc_q                  <= cva6_cheri_pkg::REG_ROOT_CAP;
+      utcc_q                 <= cva6_cheri_pkg::REG_ROOT_CAP;
+      utdc_q                 <= cva6_cheri_pkg::REG_NULL_CAP;
+      uscratchc_q            <= cva6_cheri_pkg::REG_NULL_CAP;
+      sepcc_q                <= cva6_cheri_pkg::REG_ROOT_CAP;
+      stcc_q                 <= cva6_cheri_pkg::REG_ROOT_CAP;
+      stdc_q                 <= cva6_cheri_pkg::REG_NULL_CAP;
+      sscratchc_q            <= cva6_cheri_pkg::REG_NULL_CAP;
+      sepcc_q                <= cva6_cheri_pkg::REG_ROOT_CAP;
+      mtcc_q                 <= cva6_cheri_pkg::REG_ROOT_CAP;
+      mtdc_q                 <= cva6_cheri_pkg::REG_NULL_CAP;
+      mscratchc_q            <= cva6_cheri_pkg::REG_NULL_CAP;
+      mepcc_q                <= cva6_cheri_pkg::REG_ROOT_CAP;
     end else begin
       priv_lvl_q <= priv_lvl_d;
       // floating-point registers
@@ -2374,6 +2755,7 @@ module csr_regfile
         debug_mode_q <= debug_mode_d;
         dcsr_q       <= dcsr_d;
         dpc_q        <= dpc_d;
+        dpc_cap_q              <= dpc_cap_d;
         dscratch0_q  <= dscratch0_d;
         dscratch1_q  <= dscratch1_d;
       end
@@ -2387,6 +2769,7 @@ module csr_regfile
       mcause_q         <= mcause_d;
       mcounteren_q     <= mcounteren_d;
       mscratch_q       <= mscratch_d;
+      mccsr_q                <= mccsr_d;
       if (CVA6Cfg.TvalEn) mtval_q <= mtval_d;
       fiom_q          <= fiom_d;
       dcache_q        <= dcache_d;
@@ -2402,6 +2785,7 @@ module csr_regfile
         stvec_q      <= stvec_d;
         scounteren_q <= scounteren_d;
         sscratch_q   <= sscratch_d;
+        sccsr_q                <= sccsr_d;
         if (CVA6Cfg.TvalEn) stval_q <= stval_d;
         satp_q <= satp_d;
       end
@@ -2438,6 +2822,19 @@ module csr_regfile
       // pmp
       pmpcfg_q               <= pmpcfg_next;
       pmpaddr_q              <= pmpaddr_next;
+      ddc_q                  <= ddc_d;
+      utcc_q                 <= utcc_d;
+      utdc_q                 <= utdc_d;
+      uscratchc_q            <= uscratchc_d;
+      sepcc_q                <= sepcc_d;
+      stcc_q                 <= stcc_d;
+      stdc_q                 <= stdc_d;
+      sscratchc_q            <= sscratchc_d;
+      sepcc_q                <= sepcc_d;
+      mtcc_q                 <= mtcc_d;
+      mtdc_q                 <= mtdc_d;
+      mscratchc_q            <= mscratchc_d;
+      mepcc_q                <= mepcc_d;
     end
   end
 

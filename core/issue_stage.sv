@@ -47,13 +47,13 @@ module issue_stage
     // Handshake's acknowlege with decode stage - ID_STAGE
     output logic [SUPERSCALAR:0] decoded_instr_ack_o,
     // rs1 forwarding - EX_STAGE
-    output [CVA6Cfg.VLEN-1:0] rs1_forwarding_o,
+    output logic [CVA6Cfg.REGLEN-1:0] rs1_forwarding_o,
     // rs2 forwarding - EX_STAGE
-    output [CVA6Cfg.VLEN-1:0] rs2_forwarding_o,
+    output logic [CVA6Cfg.REGLEN-1:0] rs2_forwarding_o,
     // FU data useful to execute instruction - EX_STAGE
     output fu_data_t fu_data_o,
     // Program Counter - EX_STAGE
-    output logic [CVA6Cfg.VLEN-1:0] pc_o,
+    output logic [CVA6Cfg.PCLEN-1:0] pc_o,
     // Is compressed instruction - EX_STAGE
     output logic is_compressed_instr_o,
     // Transformed trap instruction - EX_STAGE
@@ -84,6 +84,8 @@ module issue_stage
     output logic [2:0] fpu_rm_o,
     // CSR is valid - EX_STAGE
     output logic csr_valid_o,
+    // CLU is valid - EX_STAGE
+    output logic clu_valid_o,
     // CVXIF FU is valid - EX_STAGE
     output logic x_issue_valid_o,
     // CVXIF is FU ready - EX_STAGE
@@ -99,7 +101,7 @@ module issue_stage
     // The branch engine uses the write back from the ALU - EX_STAGE
     input bp_resolve_t resolved_branch_i,
     // TO_BE_COMPLETED - EX_STAGE
-    input logic [CVA6Cfg.NrWbPorts-1:0][CVA6Cfg.XLEN-1:0] wbdata_i,
+    input logic [CVA6Cfg.NrWbPorts-1:0][CVA6Cfg.REGLEN-1:0] wbdata_i,
     // exception from execute stage or CVXIF - EX_STAGE
     input exception_t [CVA6Cfg.NrWbPorts-1:0] ex_ex_i,
     // TO_BE_COMPLETED - EX_STAGE
@@ -109,7 +111,13 @@ module issue_stage
     // TO_BE_COMPLETED - EX_STAGE
     input logic [CVA6Cfg.NrCommitPorts-1:0][4:0] waddr_i,
     // TO_BE_COMPLETED - EX_STAGE
-    input logic [CVA6Cfg.NrCommitPorts-1:0][CVA6Cfg.XLEN-1:0] wdata_i,
+    input logic [CVA6Cfg.NrCommitPorts-1:0][CVA6Cfg.REGLEN-1:0] wdata_i,
+    // Fast-Register Clear - EX_STAGE
+    output  logic [CVA6Cfg.NrCommitPorts-1:0]              clr_i,
+    // Fast-Register Clear Mask - EX_STAGE
+    output  logic [CVA6Cfg.NrCommitPorts-1:0][7:0]         mask_i,
+    // Fast-Register Clear Quarter - EX_STAGE
+    output  logic [CVA6Cfg.NrCommitPorts-1:0][1:0]         quarter_i,
     // GPR write enable - EX_STAGE
     input logic [CVA6Cfg.NrCommitPorts-1:0] we_gpr_i,
     // FPR write enable - EX_STAGE
@@ -134,11 +142,11 @@ module issue_stage
   fu_t               [2**REG_ADDR_SIZE-1:0]       rd_clobber_fpr_sb_iro;
 
   logic              [   REG_ADDR_SIZE-1:0]       rs1_iro_sb;
-  logic              [    CVA6Cfg.XLEN-1:0]       rs1_sb_iro;
+  logic              [    CVA6Cfg.REGLEN-1:0]       rs1_sb_iro;
   logic                                           rs1_valid_sb_iro;
 
   logic              [   REG_ADDR_SIZE-1:0]       rs2_iro_sb;
-  logic              [    CVA6Cfg.XLEN-1:0]       rs2_sb_iro;
+  logic              [    CVA6Cfg.REGLEN-1:0]       rs2_sb_iro;
   logic                                           rs2_valid_iro_sb;
 
   logic              [   REG_ADDR_SIZE-1:0]       rs3_iro_sb;
@@ -150,11 +158,11 @@ module issue_stage
   logic              [       SUPERSCALAR:0]       issue_instr_valid_sb_iro;
   logic              [       SUPERSCALAR:0]       issue_ack_iro_sb;
 
-  logic              [    CVA6Cfg.XLEN-1:0]       rs1_forwarding_xlen;
-  logic              [    CVA6Cfg.XLEN-1:0]       rs2_forwarding_xlen;
+  logic              [    CVA6Cfg.REGLEN-1:0]       rs1_forwarding_xlen;
+  logic              [    CVA6Cfg.REGLEN-1:0]       rs2_forwarding_xlen;
 
-  assign rs1_forwarding_o = rs1_forwarding_xlen[CVA6Cfg.VLEN-1:0];
-  assign rs2_forwarding_o = rs2_forwarding_xlen[CVA6Cfg.VLEN-1:0];
+  assign rs1_forwarding_o = rs1_forwarding_xlen;
+  assign rs2_forwarding_o = rs2_forwarding_xlen;
 
   assign issue_instr_o    = issue_instr_sb_iro[0];
   assign issue_instr_hs_o = issue_instr_valid_sb_iro[0] & issue_ack_iro_sb[0];
@@ -229,6 +237,7 @@ module issue_stage
       .alu_valid_o        (alu_valid_o),
       .branch_valid_o     (branch_valid_o),
       .csr_valid_o        (csr_valid_o),
+      .clu_valid_o        (clu_valid_o),
       .cvxif_valid_o      (x_issue_valid_o),
       .cvxif_ready_i      (x_issue_ready_i),
       .cvxif_off_instr_o  (x_off_instr_o),

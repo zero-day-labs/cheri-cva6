@@ -36,6 +36,7 @@ module cva6_icache
     parameter type icache_drsp_t = logic,
     parameter type icache_req_t = logic,
     parameter type icache_rtrn_t = logic,
+    parameter type exception_t = logic,
     /// ID to be used for read transactions
     parameter logic [CVA6Cfg.MEM_TID_WIDTH-1:0] RdTxId = 0
 ) (
@@ -78,6 +79,7 @@ module cva6_icache
   // signals
   logic cache_en_d, cache_en_q;  // cache is enabled
   logic [CVA6Cfg.VLEN-1:0] vaddr_d, vaddr_q;
+  exception_t ex_d, ex_q;
   logic paddr_is_nc;  // asserted if physical address is non-cacheable
   logic [CVA6Cfg.ICACHE_SET_ASSOC-1:0] cl_hit;  // hit from tag compare
   logic cache_rden;  // triggers cache lookup
@@ -147,7 +149,9 @@ module cva6_icache
   // latch this in case we have to stall later on
   // make sure this is 32bit aligned
   assign vaddr_d = (dreq_o.ready & dreq_i.req) ? dreq_i.vaddr : vaddr_q;
+  assign ex_d    = (dreq_o.ready & dreq_i.req) ? dreq_i.ex : ex_q;
   assign areq_o.fetch_vaddr = (vaddr_q >> CVA6Cfg.FETCH_ALIGN_BITS) << CVA6Cfg.FETCH_ALIGN_BITS;
+  assign areq_o.fetch_exception = ex_q;
 
   // split virtual address into index and offset to address cache arrays
   assign cl_index = vaddr_d[CVA6Cfg.ICACHE_INDEX_WIDTH-1:ICACHE_OFFSET_WIDTH];
@@ -505,6 +509,7 @@ module cva6_icache
       cl_tag_q      <= '0;
       flush_cnt_q   <= '0;
       vaddr_q       <= '0;
+      ex_q          <= '0;
       cmp_en_q      <= '0;
       cache_en_q    <= '0;
       flush_q       <= '0;
@@ -516,6 +521,7 @@ module cva6_icache
       cl_tag_q      <= cl_tag_d;
       flush_cnt_q   <= flush_cnt_d;
       vaddr_q       <= vaddr_d;
+      ex_q          <= ex_d;
       cmp_en_q      <= cmp_en_d;
       cache_en_q    <= cache_en_d;
       flush_q       <= flush_d;
