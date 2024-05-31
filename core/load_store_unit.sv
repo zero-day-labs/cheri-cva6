@@ -573,6 +573,12 @@ module load_store_unit
 
     if (lsu_ctrl.valid) begin
       case (lsu_ctrl.operation)
+      // double word
+        LC, SC, AMO_LRC, AMO_SCC: begin
+          if (CVA6Cfg.CheriPresent && CVA6Cfg.IS_XLEN64 && lsu_ctrl.vaddr[3:0] != 4'b0000) begin
+            data_misaligned = 1'b1;
+          end
+        end
         // double word
         LD, SD, FLD, FSD,
                 AMO_LRD, AMO_SCD,
@@ -730,7 +736,7 @@ module load_store_unit
             ariane_pkg::HLV_D: begin
                 size = 8;
             end
-            ariane_pkg::LC, ariane_pkg::SC, ariane_pkg::CLOAD_TAGS: begin
+            ariane_pkg::LC, ariane_pkg::SC, ariane_pkg::AMO_LRC, ariane_pkg::AMO_SCC, ariane_pkg::CLOAD_TAGS: begin
                 size = cva6_cheri_pkg::CLEN/8;
             end
             default:    size = 1;
@@ -743,7 +749,7 @@ module load_store_unit
                 cheri_exception.valid     = 1'b1;
             end
 
-            if (!check_cap.hperms.permit_load_cap && (lsu_ctrl.fu == LOAD) && (fu_data_i.operation inside{ariane_pkg::LC,ariane_pkg::CLOAD_TAGS})) begin
+            if (!check_cap.hperms.permit_load_cap && (lsu_ctrl.fu == LOAD) && (fu_data_i.operation inside{ariane_pkg::LC, ariane_pkg::AMO_LRC ,ariane_pkg::CLOAD_TAGS})) begin
                 cheri_tval.cause   = cva6_cheri_pkg::CAP_PERM_LD_CAP_VIOLATION;
                 cheri_exception.valid     = 1'b1;
             end
@@ -753,7 +759,7 @@ module load_store_unit
                 cheri_exception.valid     = 1'b1;
             end
 
-            if (!check_cap.hperms.permit_store_cap && (lsu_ctrl.fu == STORE) && (fu_data_i.operation inside{ariane_pkg::SC})) begin
+            if (!check_cap.hperms.permit_store_cap && (lsu_ctrl.fu == STORE) && (fu_data_i.operation inside{ariane_pkg::SC,ariane_pkg::AMO_SCC})) begin
                 cheri_tval.cause   = cva6_cheri_pkg::CAP_PERM_ST_CAP_VIOLATION;
                 cheri_exception.valid     = 1'b1;
             end

@@ -1393,6 +1393,13 @@ module decoder
               5'h1C: instruction_o.op = ariane_pkg::AMO_MAXDU;
               default: illegal_instr = 1'b1;
             endcase
+          end else if (CVA6Cfg.CheriPresent && CVA6Cfg.RVA && instr.stype.funct3 == 3'h4) begin
+            unique case (instr.instr[31:27])
+              5'h1: instruction_o.op = ariane_pkg::AMO_SWAPC;
+              5'h2: instruction_o.op = ariane_pkg::AMO_LRC;
+              5'h3: instruction_o.op = ariane_pkg::AMO_SCC;
+              default: illegal_instr = 1'b1;
+            endcase
           end else begin
             illegal_instr = 1'b1;
           end

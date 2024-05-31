@@ -42,7 +42,7 @@ module amo_buffer #(
     ariane_pkg::amo_t        op;
     logic [CVA6Cfg.PLEN-1:0] paddr;
     logic [CVA6Cfg.CLEN-1:0] data;
-    logic [CVA6Cfg.CheriCapTagWidth-1:0] ctag;
+    logic [CVA6Cfg.CheriCapTagWidth-1:0] cap_vld;
     logic [CVA6Cfg.DCACHE_DATA_SIZE_WIDTH-1:0] size;
   } amo_op_t;
 
@@ -52,16 +52,14 @@ module amo_buffer #(
   assign amo_req_o.req = no_st_pending_i & amo_valid_commit_i & amo_valid;
   assign amo_req_o.amo_op = amo_data_out.op;
   assign amo_req_o.size = amo_data_out.size;
-  always_comb begin
-    amo_req_o.operand_a = '0;
-    amo_req_o.operand_a.addr = {{64-CVA6Cfg.PLEN{1'b0}}, amo_data_out.paddr};
-  end
+  assign amo_req_o.operand_a[CVA6Cfg.XLEN-1:0]= {{64-CVA6Cfg.PLEN{1'b0}}, amo_data_out.paddr};
   assign amo_req_o.operand_b = amo_data_out.data;
+  assign amo_req_o.cap_vld = amo_data_out.cap_vld;
 
   assign amo_data_in.op = amo_op_i;
   assign amo_data_in.data = data_i;
   assign amo_data_in.paddr = paddr_i;
-  assign amo_data_in.ctag = cap_tag_i;
+  assign amo_data_in.cap_vld = cap_tag_i;
   assign amo_data_in.size = data_size_i;
 
   // only flush if we are currently not committing the AMO

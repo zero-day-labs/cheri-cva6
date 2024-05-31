@@ -28,6 +28,7 @@
 /// moved out to favour a fully parameterizable core.
 package ariane_pkg;
 
+  localparam CLEN = cva6_config_pkg::CVA6ConfigRVZcheripurecap || cva6_config_pkg::CVA6ConfigRVZcherihybrid ? 2*cva6_config_pkg::CVA6ConfigXlen : cva6_config_pkg::CVA6ConfigXlen;
   // TODO: Slowly move those parameters to the new system.
   localparam BITS_SATURATION_COUNTER = 2;
 
@@ -363,8 +364,10 @@ package ariane_pkg;
     // Atomic Memory Operations
     AMO_LRW,
     AMO_LRD,
+    AMO_LRC,
     AMO_SCW,
     AMO_SCD,
+    AMO_SCC,
     AMO_SWAPW,
     AMO_ADDW,
     AMO_ANDW,
@@ -383,6 +386,7 @@ package ariane_pkg;
     AMO_MAXDU,
     AMO_MIND,
     AMO_MINDU,
+    AMO_SWAPC,
     // Multiplications
     MUL,
     MULH,
@@ -649,8 +653,8 @@ package ariane_pkg;
     logic        req;        // this request is valid
     amo_t        amo_op;     // atomic memory operation to perform
     logic [2:0]  size;       // 2'b10 --> word operation, 2'b11 --> double word operation
-    cva6_cheri_pkg::cap_reg_t operand_a;  // address
-    logic [cva6_cheri_pkg::CLEN-2:0] operand_b; // data as layouted in the register
+    logic [63:0] operand_a;  // address
+    logic [CLEN-1:0] operand_b; // data as layouted in the register
     logic                   cap_vld;
   } amo_req_t;
 
@@ -658,8 +662,8 @@ package ariane_pkg;
   // TODO: fix this
   typedef struct packed {
     logic        ack;     // response is valid
-    logic [cva6_cheri_pkg::CLEN-2:0] result; // sign-extended, result
-        logic                   cap_vld;
+    logic [CLEN-1:0] result; // sign-extended, result
+    logic        cap_vld;
   } amo_resp_t;
 
   localparam RVFI = cva6_config_pkg::CVA6ConfigRvfiTrace;

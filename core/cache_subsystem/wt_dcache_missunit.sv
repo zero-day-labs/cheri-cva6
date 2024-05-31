@@ -262,7 +262,7 @@ module wt_dcache_missunit
   always_comb begin
     if (CVA6Cfg.RVA) begin
       if (CVA6Cfg.IS_XLEN64) begin
-        if (amo_req_i.size == 2'b10) begin
+        if (amo_req_i.size == 3'b010) begin
           amo_data = amo_data_a;
         end else begin
           amo_data = amo_data_b;
@@ -271,7 +271,7 @@ module wt_dcache_missunit
         amo_data = amo_data_a;
       end
       if (CVA6Cfg.DATA_USER_EN) begin
-        amo_user = amo_data;
+        amo_user = (CVA6Cfg.CheriPresent) ? amo_req_i.cap_vld : amo_data;
       end else begin
         amo_user = '0;
       end
@@ -286,15 +286,16 @@ module wt_dcache_missunit
             CVA6Cfg.AxiDataWidth/8
         )-1:3]*64+:64];
       end else begin
-        assign amo_rtrn_mux = mem_rtrn_i.data[0+:64];
+        assign amo_rtrn_mux = mem_rtrn_i.data[0+:CVA6Cfg.CLEN];
       end
     end else begin : gen_piton_rtrn_mux
       assign amo_rtrn_mux = mem_rtrn_i.data[amo_req_i.operand_a[CVA6Cfg.DCACHE_OFFSET_WIDTH-1:3]*64+:64];
     end
 
     // always sign extend 32bit values
-    assign amo_resp_o.result = (amo_req_i.size==2'b10) ? {{32{amo_rtrn_mux[amo_req_i.operand_a[2]*32 + 31]}},amo_rtrn_mux[amo_req_i.operand_a[2]*32 +: 32]} :
+    assign amo_resp_o.result = (amo_req_i.size==3'b010) ? {{(CVA6Cfg.CLEN-32){amo_rtrn_mux[amo_req_i.operand_a[2]*32 + 31]}},amo_rtrn_mux[amo_req_i.operand_a[2]*32 +: 32]} :
                                                        amo_rtrn_mux ;
+    assign amo_resp_o.cap_vld = mem_rtrn_i.user;
     assign amo_req_d = amo_req_i.req;
   end
 
@@ -304,7 +305,7 @@ module wt_dcache_missunit
   assign mem_data_o.way = (CVA6Cfg.RVA && amo_sel) ? '0 : repl_way;
   assign mem_data_o.data = (CVA6Cfg.RVA && amo_sel) ? amo_data : miss_wdata_i[miss_port_idx];
   assign mem_data_o.user = (CVA6Cfg.RVA && amo_sel) ? amo_user : miss_wuser_i[miss_port_idx];
-  assign mem_data_o.size   = (CVA6Cfg.RVA && amo_sel) ? {1'b0, amo_req_i.size} : miss_size_i [miss_port_idx];
+  assign mem_data_o.size   = (CVA6Cfg.RVA && amo_sel) ? amo_req_i.size : miss_size_i [miss_port_idx];
   assign mem_data_o.amo_op = (CVA6Cfg.RVA && amo_sel) ? amo_req_i.amo_op : AMO_NONE;
 
   assign tmp_paddr         = (CVA6Cfg.RVA && amo_sel) ? amo_req_i.operand_a[CVA6Cfg.PLEN-1:0] : miss_paddr_i[miss_port_idx];

@@ -318,9 +318,9 @@ module store_unit
     // save AMO op for next cycle
     if (CVA6Cfg.RVA) begin
       case (lsu_ctrl_i.operation)
-        AMO_LRW, AMO_LRD:     amo_op_d = AMO_LR;
-        AMO_SCW, AMO_SCD:     amo_op_d = AMO_SC;
-        AMO_SWAPW, AMO_SWAPD: amo_op_d = AMO_SWAP;
+        AMO_LRW, AMO_LRD, AMO_LRC:     amo_op_d = AMO_LR;
+        AMO_SCW, AMO_SCD, AMO_SCC:     amo_op_d = AMO_SC;
+        AMO_SWAPW, AMO_SWAPD, AMO_SWAPC: amo_op_d = AMO_SWAP;
         AMO_ADDW, AMO_ADDD:   amo_op_d = AMO_ADD;
         AMO_ANDW, AMO_ANDD:   amo_op_d = AMO_AND;
         AMO_ORW, AMO_ORD:     amo_op_d = AMO_OR;
