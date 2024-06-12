@@ -1570,7 +1570,7 @@ module decoder
                                         // ------------------------------------
                                         // Fast Register-Clearing Instructions
                                         // ------------------------------------
-                                        5'b01010: begin
+                                        5'b10010: begin
                                             instruction_o.fu  = LOAD;
                                             imm_select = NOIMM;
                                             instruction_o.rs1[4:0] = instr.itype.rs1;
@@ -1605,15 +1605,16 @@ module decoder
                                     // if instr[23] == 0, this is a DDC relative load
                                     instruction_o.use_ddc  = instr.instr[23] ? 1'b0 : 1'b1;
                                     // determine load size and signed type
-                                    unique case (instr.rtype.rs2[2:0])
-                                        3'b000: instruction_o.op  = ariane_pkg::LB;
-                                        3'b001: instruction_o.op  = ariane_pkg::LH;
-                                        3'b010: instruction_o.op  = ariane_pkg::LW;
-                                        3'b011: instruction_o.op  = ariane_pkg::LD;
-                                        3'b100: instruction_o.op  = ariane_pkg::LBU;
-                                        3'b101: instruction_o.op  = ariane_pkg::LHU;
-                                        3'b110: instruction_o.op  = ariane_pkg::LWU;
-                                        3'b111: instruction_o.op  = ariane_pkg::LC;
+                                    unique case (instr.rtype.rs2)
+                                        5'b00000: instruction_o.op  = ariane_pkg::LB;
+                                        5'b00001: instruction_o.op  = ariane_pkg::LH;
+                                        5'b00010: instruction_o.op  = ariane_pkg::LW;
+                                        5'b00011: instruction_o.op  = ariane_pkg::LD;
+                                        5'b00100: instruction_o.op  = ariane_pkg::LBU;
+                                        5'b00101: instruction_o.op  = ariane_pkg::LHU;
+                                        5'b00110: instruction_o.op  = ariane_pkg::LWU;
+                                        5'b00111: instruction_o.op  = ariane_pkg::LC;
+                                        default: illegal_instr = 1'b1;
                                     endcase
                                 end
                                 // ------------------------------------
@@ -1628,12 +1629,12 @@ module decoder
                                     // if instr[23] == 0, this is a DDC relative load
                                     instruction_o.use_ddc  = instr.instr[10] ? 1'b0 : 1'b1;
                                     // determine store size
-                                    unique case (instr.rtype.rd[2:0])
-                                        3'b000: instruction_o.op  = ariane_pkg::SB;
-                                        3'b001: instruction_o.op  = ariane_pkg::SH;
-                                        3'b010: instruction_o.op  = ariane_pkg::SW;
-                                        3'b011: instruction_o.op  = ariane_pkg::SD;
-                                        3'b100: instruction_o.op  = ariane_pkg::SC;
+                                    unique case (instr.rtype.rd)
+                                        5'b00000: instruction_o.op  = ariane_pkg::SB;
+                                        5'b00001: instruction_o.op  = ariane_pkg::SH;
+                                        5'b00010: instruction_o.op  = ariane_pkg::SW;
+                                        5'b00011: instruction_o.op  = ariane_pkg::SD;
+                                        5'b00100: instruction_o.op  = ariane_pkg::SC;
                                         default: illegal_instr = 1'b1;
                                     endcase
                                 end

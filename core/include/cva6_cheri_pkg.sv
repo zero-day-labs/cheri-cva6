@@ -187,7 +187,7 @@ package cva6_cheri_pkg;
           * Allow this capability to be stored via capabilities that do not
           * themselves have PERMIT_STORE_LOCAL_CAPABILITY set.
           */
-        bool_t   global;
+        bool_t   gbl;
     } cap_hperms_t;
 
     /* Capability flags definition */
@@ -306,10 +306,7 @@ package cva6_cheri_pkg;
         top_bits     : CAP_RESET_TOP,
         base_bits    : '{default: 0}
     };
-    localparam cap_cbounds_t DEFAULT_CBOUNDS_CAP = '{
-        cbounds     : '{default: 0}
-    };
-
+    localparam cap_cbounds_t DEFAULT_CBOUNDS_CAP = '0;
     /* Capability default root capability and null capabilities for PCC and capability registers */
     localparam cap_reg_t REG_ROOT_CAP = '{
         tag             : 1'b1,

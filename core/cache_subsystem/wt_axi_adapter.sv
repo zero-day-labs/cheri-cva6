@@ -531,6 +531,11 @@ module wt_axi_adapter
       if (dcache_first_q) begin
         dcache_rd_shift_d[0] = axi_rd_data;
         dcache_rd_shift_user_d[0] = axi_rd_user;
+        // replicate also the second word
+        if (CVA6Cfg.CheriPresent) begin
+          dcache_rd_shift_d[1] = axi_rd_data;
+          dcache_rd_shift_user_d[1] = axi_rd_user;
+        end
       end
     end else if (CVA6Cfg.RVA && dcache_sc_rtrn) begin
       // encode lr/sc success

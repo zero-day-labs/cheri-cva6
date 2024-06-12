@@ -286,6 +286,34 @@ module csr_regfile
   logic [CVA6Cfg.XLEN-1:0] icache_q, icache_d;
   logic [CVA6Cfg.XLEN-1:0] acc_cons_q, acc_cons_d;
 
+      // Default data capability
+    cap_pcc_t pcc_d, pcc_q;
+    cap_reg_t ddc_d, ddc_q;
+
+    // User mode SCRs
+    cap_reg_t utcc_q, utcc_d;
+    cap_reg_t utdc_q, utdc_d;
+    cap_reg_t uscratchc_q, uscratchc_d;
+    cap_reg_t uepcc_q, uepcc_d;
+
+    // TODO: Virtual Supervisor mode SCRs
+    cap_reg_t vstcc_q, vstcc_d;
+    cap_reg_t vstdc_q, vstdc_d;
+    cap_reg_t vsscratchc_q, vsscratchc_d;
+    cap_reg_t vsepcc_q, vsepcc_d;
+
+    // Supervisor mode SCRs
+    cap_reg_t stcc_q, stcc_d;
+    cap_reg_t stdc_q, stdc_d;
+    cap_reg_t sscratchc_q, sscratchc_d;
+    cap_reg_t sepcc_q, sepcc_d;
+
+    // Machine mode SCRs
+    cap_reg_t mtcc_q, mtcc_d;
+    cap_reg_t mtdc_q, mtdc_d;
+    cap_reg_t mscratchc_q, mscratchc_d;
+    cap_reg_t mepcc_q, mepcc_d;
+
   logic wfi_d, wfi_q;
 
   logic [63:0] cycle_q, cycle_d;
@@ -434,34 +462,6 @@ module csr_regfile
         if(wr_cap.otype != UNSEALED_CAP )
             wr_cap_csr_result.tag = 1'b0;
     end
-
-    // Default data capability
-    cap_pcc_t pcc_d, pcc_q;
-    cap_reg_t ddc_d, ddc_q;
-
-    // User mode SCRs
-    cap_reg_t utcc_q, utcc_d;
-    cap_reg_t utdc_q, utdc_d;
-    cap_reg_t uscratchc_q, uscratchc_d;
-    cap_reg_t uepcc_q, uepcc_d;
-
-    // TODO: Virtual Supervisor mode SCRs
-    cap_reg_t vstcc_q, vstcc_d;
-    cap_reg_t vstdc_q, vstdc_d;
-    cap_reg_t vsscratchc_q, vsscratchc_d;
-    cap_reg_t vsepcc_q, vsepcc_d;
-
-    // Supervisor mode SCRs
-    cap_reg_t stcc_q, stcc_d;
-    cap_reg_t stdc_q, stdc_d;
-    cap_reg_t sscratchc_q, sscratchc_d;
-    cap_reg_t sepcc_q, sepcc_d;
-
-    // Machine mode SCRs
-    cap_reg_t mtcc_q, mtcc_d;
-    cap_reg_t mtdc_q, mtdc_d;
-    cap_reg_t mscratchc_q, mscratchc_d;
-    cap_reg_t mepcc_q, mepcc_d;
 
   always_comb begin : csr_read_process
     // a read access exception can only occur if we attempt to read a CSR which does not exist
@@ -990,76 +990,6 @@ module csr_regfile
     // CHERI CSRs as SRCs
     // ------------------------------------------
     //assign cap_set_offset = cap_inc_offset(cap_sel, cap_offset, 1'b0);
-    always_comb begin : scr_update_process
-        scr_wdata   = csr_wdata_i;
-        // a read access exception can only occur if we attempt to read a CSR which does not exist
-        cheri_update_access_exception = 1'b0;
-        ddc_d       = ddc_q;
-        // utcc_d      = utcc_q;
-        // utdc_d      = utdc_q;
-        // uscratchc_d = uscratchc_q;
-        sepcc_d     = sepcc_q;
-        stcc_d      = stcc_q;
-        stdc_d      = stdc_q;
-        sscratchc_d = sscratchc_q;
-
-        if (mtvec_rst_load_q) begin
-            mtcc_d = cap_pcc_to_cap_reg(boot_addr_i);
-            mtcc_d.addr = boot_addr_i[CVA6Cfg.XLEN-1:0] + 'h40;
-        end else begin
-            mtcc_d      = mtcc_q;
-        end
-        mtdc_d      = mtdc_q;
-        mscratchc_d = mscratchc_q;
-        mepcc_d     = mepcc_q;
-
-        if(scr_we) begin
-            unique case (scr_addr)
-                    cva6_cheri_pkg::SCR_DDC: begin
-                        ddc_d = scr_wdata;
-                    end
-                    cva6_cheri_pkg::SCR_UTCC: begin
-                        utcc_d = scr_wdata;
-                    end
-                    cva6_cheri_pkg::SCR_UTDC: begin
-                        utdc_d = scr_wdata;
-                    end
-                    cva6_cheri_pkg::SCR_USCRATCHC: begin
-                        uscratchc_d = scr_wdata;
-                    end
-                    cva6_cheri_pkg::SCR_UEPCC: begin
-                        sepcc_d = scr_wdata;
-                    end
-                    cva6_cheri_pkg::SCR_STCC: begin
-                        stcc_d = scr_wdata;
-                    end
-                    cva6_cheri_pkg::SCR_STDC: begin
-                        stdc_d = scr_wdata;
-                    end
-                    cva6_cheri_pkg::SCR_SSCRATCHC: begin
-                        sscratchc_d = scr_wdata;
-                    end
-                    cva6_cheri_pkg::SCR_SEPCC: begin
-                        sepcc_d = scr_wdata;
-                    end
-                    cva6_cheri_pkg::SCR_MTCC: begin
-                        mtcc_d = scr_wdata;
-                    end
-                    cva6_cheri_pkg::SCR_MTDC: begin
-                        mtdc_d = scr_wdata;
-                    end
-                    cva6_cheri_pkg::SCR_MSCRATCHC: begin
-                        mscratchc_d = scr_wdata;
-                    end
-                    cva6_cheri_pkg::SCR_MEPCC: begin
-                        mepcc_d = scr_wdata;
-                    end
-                    default: begin
-                        cheri_update_access_exception = 1'b1;
-                    end
-            endcase
-        end
-    end
   // ---------------------------
   // CSR Write and update logic
   // ---------------------------
@@ -1179,6 +1109,74 @@ module csr_regfile
 
     pmpcfg_d                 = pmpcfg_q;
     pmpaddr_d                = pmpaddr_q;
+    scr_wdata   = csr_wdata_i;
+        // a read access exception can only occur if we attempt to read a CSR which does not exist
+        cheri_update_access_exception = 1'b0;
+        ddc_d       = ddc_q;
+        // utcc_d      = utcc_q;
+        // utdc_d      = utdc_q;
+        // uscratchc_d = uscratchc_q;
+        sepcc_d     = sepcc_q;
+        stcc_d      = stcc_q;
+        stdc_d      = stdc_q;
+        sscratchc_d = sscratchc_q;
+
+        if (mtvec_rst_load_q) begin
+            mtcc_d = cap_pcc_to_cap_reg(boot_addr_i);
+            mtcc_d.addr = boot_addr_i[CVA6Cfg.XLEN-1:0] + 'h40;
+        end else begin
+            mtcc_d      = mtcc_q;
+        end
+        mtdc_d      = mtdc_q;
+        mscratchc_d = mscratchc_q;
+        mepcc_d     = mepcc_q;
+
+        if(scr_we) begin
+            unique case (scr_addr)
+                    cva6_cheri_pkg::SCR_DDC: begin
+                        ddc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_UTCC: begin
+                        utcc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_UTDC: begin
+                        utdc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_USCRATCHC: begin
+                        uscratchc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_UEPCC: begin
+                        sepcc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_STCC: begin
+                        stcc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_STDC: begin
+                        stdc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_SSCRATCHC: begin
+                        sscratchc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_SEPCC: begin
+                        sepcc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_MTCC: begin
+                        mtcc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_MTDC: begin
+                        mtdc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_MSCRATCHC: begin
+                        mscratchc_d = scr_wdata;
+                    end
+                    cva6_cheri_pkg::SCR_MEPCC: begin
+                        mepcc_d = scr_wdata;
+                    end
+                    default: begin
+                        cheri_update_access_exception = 1'b1;
+                    end
+            endcase
+        end
 
     // check for correct access rights and that we are writing
     if (csr_we) begin
@@ -2139,7 +2137,7 @@ module csr_regfile
           // consecutive PC
         end else begin
           dpc_d = {
-            {CVA6Cfg.XLEN - CVA6Cfg.VLEN{commit_instr_i[0].pc[CVA6Cfg.VLEN-1:0][CVA6Cfg.VLEN-1]}},
+            {CVA6Cfg.XLEN - CVA6Cfg.VLEN{commit_instr_i[0].pc[CVA6Cfg.VLEN-1]}},
             commit_instr_i[0].pc + (commit_instr_i[0].is_compressed ? 'h2 : 'h4)
           };
           dpc_cap_d = cap_reg_to_cap_pcc(commit_instr_i[0].pc);

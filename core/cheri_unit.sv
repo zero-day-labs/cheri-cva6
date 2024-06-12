@@ -443,7 +443,7 @@ module cheri_unit import ariane_pkg::*; import cva6_cheri_pkg::*;#(
                                              (1 << CAP_PERM_UNSEAL)     |
                                              (1 << CAP_LENGTH_VIOLATION);
                 tmp_cap = operand_a;
-                tmp_cap.hperms.global = tmp_cap.hperms.global & operand_b.hperms.global;
+                tmp_cap.hperms.gbl = tmp_cap.hperms.gbl & operand_b.hperms.gbl;
                 tmp_cap.otype = UNSEALED_CAP;
                 clu_result = tmp_cap;
             end

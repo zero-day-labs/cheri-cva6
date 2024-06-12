@@ -86,6 +86,9 @@ ${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/lfsr_8bit.sv
 ${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/stream_arbiter.sv
 ${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/stream_arbiter_flushable.sv
 ${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/stream_mux.sv
+${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/stream_fifo.sv
+${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/stream_xbar.sv
+${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/onehot_to_bin.sv
 ${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/stream_demux.sv
 ${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/lzc.sv
 ${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/rr_arb_tree.sv
