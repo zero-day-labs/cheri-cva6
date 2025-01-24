@@ -14,25 +14,32 @@
   logic [config_pkg::NRET*2-1:0]                ixl; \
   logic [config_pkg::NRET*5-1:0]                rs1_addr; \
   logic [config_pkg::NRET*5-1:0]                rs2_addr; \
-  logic [config_pkg::NRET*Cfg.XLEN-1:0]      rs1_rdata; \
-  logic [config_pkg::NRET*Cfg.XLEN-1:0]      rs2_rdata; \
+  logic [config_pkg::NRET*Cfg.REGLEN-1:0]      rs1_rdata; \
+  logic [config_pkg::NRET*Cfg.REGLEN-1:0]      rs2_rdata; \
   logic [config_pkg::NRET*5-1:0]                rd_addr; \
-  logic [config_pkg::NRET*Cfg.XLEN-1:0]      rd_wdata; \
-  logic [config_pkg::NRET*Cfg.XLEN-1:0]      pc_rdata; \
-  logic [config_pkg::NRET*Cfg.XLEN-1:0]      pc_wdata; \
+  logic [config_pkg::NRET*Cfg.REGLEN-1:0]      rd_wdata; \
+  logic [config_pkg::NRET*Cfg.PCLEN-1:0]      pc_rdata; \
+  logic [config_pkg::NRET*Cfg.PCLEN-1:0]      pc_wdata; \
   logic [config_pkg::NRET*Cfg.VLEN-1:0]      mem_addr; \
   logic [config_pkg::NRET*Cfg.PLEN-1:0]      mem_paddr; \
-  logic [config_pkg::NRET*(Cfg.XLEN/8)-1:0]  mem_rmask; \
-  logic [config_pkg::NRET*(Cfg.XLEN/8)-1:0]  mem_wmask; \
-  logic [config_pkg::NRET*Cfg.XLEN-1:0]      mem_rdata; \
-  logic [config_pkg::NRET*Cfg.XLEN-1:0]      mem_wdata; \
+  logic [config_pkg::NRET*(Cfg.CLEN/8)-1:0]  mem_rmask; \
+  logic [config_pkg::NRET*(Cfg.CLEN/8)-1:0]  mem_wmask; \
+  logic [config_pkg::NRET*Cfg.CLEN-1:0]      mem_rdata; \
+  logic [config_pkg::NRET*Cfg.CLEN-1:0]      mem_wdata; \
+}
+
+`define RVFI_DII_INSTR_T(Cfg) struct packed { \
+  logic [config_pkg::NRET*7:0]       padding; \
+  logic [config_pkg::NRET*7:0]       rvfi_cmd; \
+  logic [config_pkg::NRET*15:0]      rvfi_time; \
+  logic [config_pkg::NRET*31:0]      rvfi_insn; \
 }
 
 `define RVFI_CSR_ELMT_T(Cfg) struct packed { \
-  logic [Cfg.XLEN-1:0] rdata; \
-  logic [Cfg.XLEN-1:0] rmask; \
-  logic [Cfg.XLEN-1:0] wdata; \
-  logic [Cfg.XLEN-1:0] wmask; \
+  logic [Cfg.REGLEN-1:0] rdata; \
+  logic [Cfg.REGLEN-1:0] rmask; \
+  logic [Cfg.REGLEN-1:0] wdata; \
+  logic [Cfg.REGLEN-1:0] wmask; \
 }
 
 `define RVFI_CSR_T(Cfg, rvfi_csr_elmt_t) struct packed { \
@@ -105,8 +112,10 @@
   logic [ariane_pkg::SUPERSCALAR:0] is_compressed; \
   logic [Cfg.XLEN-1:0] rs1_forwarding; \
   logic [Cfg.XLEN-1:0] rs2_forwarding; \
-  logic [Cfg.NrCommitPorts-1:0][Cfg.VLEN-1:0] commit_instr_pc; \
+  logic [Cfg.NrCommitPorts-1:0][Cfg.PCLEN-1:0] commit_instr_pc; \
+  logic [Cfg.NrCommitPorts-1:0][Cfg.VLEN-1:0] commit_instr_next_pc; \
   ariane_pkg::fu_op [Cfg.NrCommitPorts-1:0] commit_instr_op; \
+  ariane_pkg::fu_t [Cfg.NrCommitPorts-1:0] commit_instr_fu; \
   logic [Cfg.NrCommitPorts-1:0][ariane_pkg::REG_ADDR_SIZE-1:0] commit_instr_rs1; \
   logic [Cfg.NrCommitPorts-1:0][ariane_pkg::REG_ADDR_SIZE-1:0] commit_instr_rs2; \
   logic [Cfg.NrCommitPorts-1:0][ariane_pkg::REG_ADDR_SIZE-1:0] commit_instr_rd; \
@@ -117,9 +126,9 @@
   riscv::priv_lvl_t priv_lvl; \
   logic [Cfg.VLEN-1:0] lsu_ctrl_vaddr; \
   ariane_pkg::fu_t lsu_ctrl_fu; \
-  logic [(Cfg.XLEN/8)-1:0] lsu_ctrl_be; \
+  logic [(Cfg.CLEN/8)-1:0] lsu_ctrl_be; \
   logic [Cfg.TRANS_ID_BITS-1:0] lsu_ctrl_trans_id; \
-  logic [((Cfg.CvxifEn || Cfg.RVV) ? 5 : 4)-1:0][Cfg.XLEN-1:0] wbdata; \
+  logic [((Cfg.CvxifEn || Cfg.RVV) ? 5 : 4)-1:0][Cfg.REGLEN-1:0] wbdata; \
   logic [Cfg.NrCommitPorts-1:0] commit_ack; \
   logic [Cfg.PLEN-1:0] mem_paddr; \
   logic debug_mode; \
@@ -159,6 +168,10 @@
   logic [Cfg.XLEN-1:0] acc_cons_q; \
   riscv::pmpcfg_t [15:0] pmpcfg_q; \
   logic [15:0][Cfg.PLEN-3:0] pmpaddr_q; \
+  logic [Cfg.REGLEN-1:0] mtcc_q; \
+  logic [Cfg.REGLEN-1:0] mtdc_q; \
+  logic [Cfg.REGLEN-1:0] mepcc_q; \
+  logic [Cfg.REGLEN-1:0] ddc_q; \
 }
 
 `endif // RVFI_TYPES_SVH

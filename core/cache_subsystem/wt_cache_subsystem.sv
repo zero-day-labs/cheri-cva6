@@ -24,6 +24,7 @@ module wt_cache_subsystem
   import wt_cache_pkg::*;
 #(
     parameter config_pkg::cva6_cfg_t CVA6Cfg        = config_pkg::cva6_cfg_empty,
+    parameter type                   exception_t  = logic,
     parameter type                   icache_areq_t  = logic,
     parameter type                   icache_arsp_t  = logic,
     parameter type                   icache_dreq_t  = logic,
@@ -32,6 +33,7 @@ module wt_cache_subsystem
     parameter type                   dcache_req_o_t = logic,
     parameter type                   icache_req_t   = logic,
     parameter type                   icache_rtrn_t  = logic,
+    parameter type                   rvfi_dii_inst_pack_t = logic,
     parameter int unsigned           NumPorts       = 4,
     parameter type                   noc_req_t      = logic,
     parameter type                   noc_resp_t     = logic
@@ -71,7 +73,11 @@ module wt_cache_subsystem
     // Invalidations
     input logic [63:0] inval_addr_i,
     input logic inval_valid_i,
-    output logic inval_ready_o
+    output logic inval_ready_o,
+    // RVFI_DII Interface
+    input  logic         rvfi_dii_rtrn_vld_i,
+    input  rvfi_dii_inst_pack_t rvfi_dii_inst_pack_i,
+    output logic         rvfi_dii_data_ready_o
     // TODO: interrupt interface
 );
 
@@ -88,7 +94,7 @@ module wt_cache_subsystem
     logic [2:0]                                      size;        // transaction size: 000=Byte 001=2Byte; 010=4Byte; 011=8Byte; 111=Cache line (16/32Byte)
     logic [CVA6Cfg.DCACHE_SET_ASSOC_WIDTH-1:0] way;  // way to replace
     logic [CVA6Cfg.PLEN-1:0] paddr;  // physical address
-    logic [CVA6Cfg.XLEN-1:0] data;  // word width of processor (no block stores at the moment)
+    logic [CVA6Cfg.CLEN-1:0] data;  // word width of processor (no block stores at the moment)
     logic [CVA6Cfg.DCACHE_USER_WIDTH-1:0]          user;        // user width of processor (no block stores at the moment)
     logic nc;  // noncacheable
     logic [CVA6Cfg.MEM_TID_WIDTH-1:0] tid;  // threadi id (used as transaction id in Ariane)
@@ -111,33 +117,53 @@ module wt_cache_subsystem
   logic dcache_adapter_data_req, adapter_dcache_data_ack, adapter_dcache_rtrn_vld;
   dcache_req_t  dcache_adapter;
   dcache_rtrn_t adapter_dcache;
-
-  cva6_icache #(
-      // use ID 0 for icache reads
+  if (CVA6Cfg.RVFI_DII) begin :gen_rvfi_dii_generator
+    rvfi_dii_generator #(
       .CVA6Cfg(CVA6Cfg),
-      .icache_areq_t(icache_areq_t),
-      .icache_arsp_t(icache_arsp_t),
       .icache_dreq_t(icache_dreq_t),
       .icache_drsp_t(icache_drsp_t),
-      .icache_req_t(icache_req_t),
-      .icache_rtrn_t(icache_rtrn_t),
-      .RdTxId(0)
-  ) i_cva6_icache (
+      .exception_t (exception_t),
+      .rvfi_dii_inst_pack_t (rvfi_dii_inst_pack_t)
+    ) i_cva6_rvfi_dii_generator (
       .clk_i         (clk_i),
       .rst_ni        (rst_ni),
-      .flush_i       (icache_flush_i),
-      .en_i          (icache_en_i),
-      .miss_o        (icache_miss_o),
-      .areq_i        (icache_areq_i),
-      .areq_o        (icache_areq_o),
       .dreq_i        (icache_dreq_i),
       .dreq_o        (icache_dreq_o),
-      .mem_rtrn_vld_i(adapter_icache_rtrn_vld),
-      .mem_rtrn_i    (adapter_icache),
-      .mem_data_req_o(icache_adapter_data_req),
-      .mem_data_ack_i(adapter_icache_data_ack),
-      .mem_data_o    (icache_adapter)
-  );
+      .rvfi_dii_rtrn_vld_i (rvfi_dii_rtrn_vld_i),
+      .rvfi_dii_inst_pack_i (rvfi_dii_inst_pack_i),
+      .rvfi_dii_data_ready_o (rvfi_dii_data_ready_o)
+    );
+    assign icache_areq_o = '0;
+    assign icache_adapter_data_req = '0;
+    assign icache_adapter = '0;
+  end else begin : gen_icache
+    cva6_icache #(
+        // use ID 0 for icache reads
+        .CVA6Cfg(CVA6Cfg),
+        .icache_areq_t(icache_areq_t),
+        .icache_arsp_t(icache_arsp_t),
+        .icache_dreq_t(icache_dreq_t),
+        .icache_drsp_t(icache_drsp_t),
+        .icache_req_t(icache_req_t),
+        .icache_rtrn_t(icache_rtrn_t),
+        .RdTxId(0)
+    ) i_cva6_icache (
+        .clk_i         (clk_i),
+        .rst_ni        (rst_ni),
+        .flush_i       (icache_flush_i),
+        .en_i          (icache_en_i),
+        .miss_o        (icache_miss_o),
+        .areq_i        (icache_areq_i),
+        .areq_o        (icache_areq_o),
+        .dreq_i        (icache_dreq_i),
+        .dreq_o        (icache_dreq_o),
+        .mem_rtrn_vld_i(adapter_icache_rtrn_vld),
+        .mem_rtrn_i    (adapter_icache),
+        .mem_data_req_o(icache_adapter_data_req),
+        .mem_data_ack_i(adapter_icache_data_ack),
+        .mem_data_o    (icache_adapter)
+    );
+  end
 
 
   // Note:

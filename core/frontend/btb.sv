@@ -60,7 +60,7 @@ module btb #(
   // number of bits par word in the bram
   localparam BRAM_WORD_BITS = $bits(btb_prediction_t);
   // we are not interested in all bits of the address
-  unread i_unread (.d_i(|vpc_i));
+  //unread i_unread (.d_i(|vpc_i));
 
 
   logic [$clog2(NR_ROWS)-1:0] index, update_pc;

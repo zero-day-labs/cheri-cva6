@@ -15,6 +15,8 @@
 
 `include "axi/assign.svh"
 `include "rvfi_types.svh"
+`include "register_interface/assign.svh"
+`include "register_interface/typedef.svh"
 
 `ifdef VERILATOR
 `include "custom_uvm_macros.svh"
@@ -22,7 +24,7 @@
 `include "uvm_macros.svh"
 `endif
 
-module ariane_testharness #(
+module ariane_testharness import cva6_cheri_pkg::*; #(
   parameter config_pkg::cva6_cfg_t CVA6Cfg = build_config_pkg::build_config(cva6_config_pkg::cva6_cfg),
   //
   parameter int unsigned AXI_USER_WIDTH    = CVA6Cfg.AxiUserWidth,
@@ -54,6 +56,7 @@ module ariane_testharness #(
     rvfi_probes_csr_t csr;
     rvfi_probes_instr_t instr;
   };
+  localparam type rvfi_dii_inst_pack_t = `RVFI_DII_INSTR_T(CVA6Cfg);
 
   // disable test-enable
   logic        test_en;
@@ -425,28 +428,53 @@ module ariane_testharness #(
   AXI_BUS #(
     .AXI_ADDR_WIDTH ( AXI_ADDRESS_WIDTH            ),
     .AXI_DATA_WIDTH ( AXI_DATA_WIDTH               ),
-    .AXI_ID_WIDTH   ( ariane_axi_soc::IdWidthSlave ),
+    .AXI_ID_WIDTH   ( ariane_axi_soc::IdWidthSlave + ((CVA6Cfg.CheriPresent) ? 1 : 0)),
     .AXI_USER_WIDTH ( AXI_USER_WIDTH               )
   ) dram_delayed();
 
-  axi_delayer_intf #(
-    .AXI_ID_WIDTH        ( ariane_axi_soc::IdWidthSlave ),
-    .AXI_ADDR_WIDTH      ( AXI_ADDRESS_WIDTH            ),
-    .AXI_DATA_WIDTH      ( AXI_DATA_WIDTH               ),
-    .AXI_USER_WIDTH      ( AXI_USER_WIDTH               ),
-    .STALL_RANDOM_INPUT  ( StallRandomInput             ),
-    .STALL_RANDOM_OUTPUT ( StallRandomOutput            ),
-    .FIXED_DELAY_INPUT   ( 0                            ),
-    .FIXED_DELAY_OUTPUT  ( 0                            )
-  ) i_axi_delayer (
-    .clk_i  ( clk_i        ),
-    .rst_ni ( ndmreset_n   ),
-    .slv    ( dram         ),
-    .mst    ( dram_delayed )
-  );
+  AXI_BUS #(
+    .AXI_ADDR_WIDTH ( AXI_ADDRESS_WIDTH            ),
+    .AXI_DATA_WIDTH ( AXI_DATA_WIDTH               ),
+    .AXI_ID_WIDTH   ( ariane_axi_soc::IdWidthSlave + 1 ),
+    .AXI_USER_WIDTH ( AXI_USER_WIDTH               )
+  ) tag_mst();
+
+  if (CVA6Cfg.CheriPresent) begin
+    axi_delayer_intf #(
+      .AXI_ID_WIDTH        ( ariane_axi_soc::IdWidthSlave + 1),
+      .AXI_ADDR_WIDTH      ( AXI_ADDRESS_WIDTH            ),
+      .AXI_DATA_WIDTH      ( AXI_DATA_WIDTH               ),
+      .AXI_USER_WIDTH      ( AXI_USER_WIDTH               ),
+      .STALL_RANDOM_INPUT  ( StallRandomInput             ),
+      .STALL_RANDOM_OUTPUT ( StallRandomOutput            ),
+      .FIXED_DELAY_INPUT   ( 0                            ),
+      .FIXED_DELAY_OUTPUT  ( 0                            )
+    ) i_axi_delayer (
+      .clk_i  ( clk_i        ),
+      .rst_ni ( ndmreset_n   ),
+      .slv    ( tag_mst ),
+      .mst    ( dram_delayed )
+    );
+  end else begin
+    axi_delayer_intf #(
+      .AXI_ID_WIDTH        ( ariane_axi_soc::IdWidthSlave ),
+      .AXI_ADDR_WIDTH      ( AXI_ADDRESS_WIDTH            ),
+      .AXI_DATA_WIDTH      ( AXI_DATA_WIDTH               ),
+      .AXI_USER_WIDTH      ( AXI_USER_WIDTH               ),
+      .STALL_RANDOM_INPUT  ( StallRandomInput             ),
+      .STALL_RANDOM_OUTPUT ( StallRandomOutput            ),
+      .FIXED_DELAY_INPUT   ( 0                            ),
+      .FIXED_DELAY_OUTPUT  ( 0                            )
+    ) i_axi_delayer (
+      .clk_i  ( clk_i        ),
+      .rst_ni ( ndmreset_n   ),
+      .slv    ( dram         ),
+      .mst    ( dram_delayed )
+    );
+  end
 
   axi2mem #(
-    .AXI_ID_WIDTH   ( ariane_axi_soc::IdWidthSlave ),
+    .AXI_ID_WIDTH   ( ariane_axi_soc::IdWidthSlave + ((CVA6Cfg.CheriPresent) ? 1 : 0 )),
     .AXI_ADDR_WIDTH ( AXI_ADDRESS_WIDTH            ),
     .AXI_DATA_WIDTH ( AXI_DATA_WIDTH               ),
     .AXI_USER_WIDTH ( AXI_USER_WIDTH               )
@@ -463,6 +491,74 @@ module ariane_testharness #(
     .user_i ( ruser        ),
     .data_i ( rdata        )
   );
+  typedef logic [CVA6Cfg.AxiAddrWidth-1:0]  axi_addr_t;
+  typedef struct packed {
+    int unsigned idx;
+    axi_addr_t   start_addr;
+    axi_addr_t   end_addr;
+  } rule_full_t;
+
+  typedef logic [ariane_axi_soc::IdWidthSlave:0] axi_mst_id_t;
+  typedef logic [CVA6Cfg.AxiDataWidth-1:0] axi_data_t;
+  typedef logic [ariane_axi_soc::StrbWidth-1:0] axi_strb_t;
+  typedef logic [CVA6Cfg.AxiUserWidth-1:0] axi_user_t;
+  typedef logic [7:0] byte_t;
+
+  `AXI_TYPEDEF_AW_CHAN_T(axi_mst_aw_t, axi_addr_t, axi_mst_id_t, axi_user_t)
+  `AXI_TYPEDEF_W_CHAN_T(axi_w_t, axi_data_t, axi_strb_t, axi_user_t)
+  `AXI_TYPEDEF_B_CHAN_T(axi_mst_b_t, axi_mst_id_t, axi_user_t)
+  `AXI_TYPEDEF_AR_CHAN_T(axi_mst_ar_t, axi_addr_t, axi_mst_id_t, axi_user_t)
+  `AXI_TYPEDEF_R_CHAN_T(axi_mst_r_t, axi_data_t, axi_mst_id_t, axi_user_t)
+
+  `AXI_TYPEDEF_REQ_T(axi_mst_req_t, axi_mst_aw_t, axi_w_t, axi_mst_ar_t)
+  `AXI_TYPEDEF_RESP_T(axi_mst_resp_t, axi_mst_b_t, axi_mst_r_t)
+
+  ariane_axi_soc::req_slv_t  dram_req;
+  ariane_axi_soc::resp_slv_t dram_resp;
+  axi_mst_req_t axi_tag_req;
+  axi_mst_resp_t axi_tag_resp;
+  if (CVA6Cfg.CheriPresent) begin : gen_cheri_tag_controller
+
+  `AXI_ASSIGN_TO_REQ(dram_req,   dram)
+  `AXI_ASSIGN_FROM_RESP( dram, dram_resp)
+  `AXI_ASSIGN_FROM_REQ(tag_mst, axi_tag_req)
+  `AXI_ASSIGN_TO_RESP(  axi_tag_resp, tag_mst)
+  `REG_BUS_TYPEDEF_ALL(conf, logic [31:0], logic [31:0], logic [3:0])
+
+    axi_tagctrl_reg_wrap #(
+        .DRAMMemBase     (ariane_soc::DRAMBase),
+        .CapSize         (CVA6Cfg.CLEN),
+        .TagCacheMemBase ({64'hA0000000}),
+        .SetAssociativity(ariane_soc::SetAssociativity),
+        .NumLines        (ariane_soc::NumLines),
+        .NumBlocks       (ariane_soc::NumBlocks),
+        .AxiIdWidth      (ariane_axi_soc::IdWidthSlave),
+        .AxiAddrWidth    (CVA6Cfg.AxiAddrWidth),
+        .AxiDataWidth    (CVA6Cfg.AxiDataWidth),
+        .AxiUserWidth    (CVA6Cfg.AxiUserWidth),
+        .slv_req_t       (ariane_axi_soc::req_slv_t),
+        .slv_resp_t      (ariane_axi_soc::resp_slv_t),
+        .mst_req_t       (axi_mst_req_t),
+        .mst_resp_t      (axi_mst_resp_t),
+        .reg_req_t       (conf_req_t),
+        .reg_resp_t      (conf_rsp_t),
+        .rule_full_t     (rule_full_t),
+        .PrintSramCfg    (1'b0)
+    ) i_axi_tagctrl_reg_wrap_raw (
+        .clk_i,
+        .rst_ni,
+        .test_i             (1'b0),
+        .slv_req_i          (dram_req),
+        .slv_resp_o         (dram_resp),
+        .mst_req_o          (axi_tag_req),
+        .mst_resp_i         (axi_tag_resp),
+        .conf_req_i         (  /* not used */),
+        .conf_resp_o        (  /* not used */),
+        .cached_start_addr_i(ariane_soc::DRAMBase),
+        .cached_end_addr_i  ({64'hA0000000})
+    );
+  end
+
 
   sram #(
     .DATA_WIDTH ( AXI_DATA_WIDTH ),
@@ -486,6 +582,16 @@ module ariane_testharness #(
     .ruser_o    ( ruser                                                                       ),
     .rdata_o    ( rdata                                                                       )
   );
+
+  /* cva6_cheri_tag_mem tag_mem (
+    .clk_i        ( clk_i     ),
+    .rst_ni       ( rst_ni    ),
+    .address_i    ( addr      ),
+    .we_i         ( we        ),
+    .writedata_i  ( wuser ),
+    .readdata_o   ( ruser )
+  ); */
+
 
   // ---------------
   // AXI Xbar
@@ -581,7 +687,7 @@ module ariane_testharness #(
 `ifndef VERILATOR
     .InclUART     ( 1'b1                     ),
 `else
-    .InclUART     ( 1'b0                     ),
+    .InclUART     ( 1'b0                    ),
 `endif
     .InclSPI      ( 1'b0                     ),
     .InclEthernet ( 1'b0                     )
@@ -624,27 +730,38 @@ module ariane_testharness #(
   rvfi_csr_t rvfi_csr;
   rvfi_instr_t [CVA6Cfg.NrCommitPorts-1:0]  rvfi_instr;
 
+  cva6_cheri_pkg::cap_pcc_t boot_cap;
+  always_comb begin : gen_boot_cap
+    boot_cap = PCC_ROOT_CAP;
+    boot_cap.addr = ariane_soc::ROMBase;
+    boot_cap.flags.cap_mode = 1'b0;
+  end
+
   ariane #(
     .CVA6Cfg              ( CVA6Cfg             ),
     .rvfi_probes_instr_t  ( rvfi_probes_instr_t ),
     .rvfi_probes_csr_t    ( rvfi_probes_csr_t   ),
     .rvfi_probes_t        ( rvfi_probes_t       ),
+    .rvfi_dii_inst_pack_t ( rvfi_dii_inst_pack_t ),
     .noc_req_t            ( ariane_axi::req_t   ),
     .noc_resp_t           ( ariane_axi::resp_t  )
   ) i_ariane (
     .clk_i                ( clk_i               ),
     .rst_ni               ( ndmreset_n          ),
-    .boot_addr_i          ( ariane_soc::ROMBase ), // start fetching from ROM
+    .boot_addr_i          ( (CVA6Cfg.CheriPresent) ? boot_cap : ariane_soc::ROMBase ), // start fetching from ROM
     .hart_id_i            ( {56'h0, hart_id}    ),
     .irq_i                ( irqs                ),
     .ipi_i                ( ipi                 ),
     .time_irq_i           ( timer_irq           ),
     .rvfi_probes_o        ( rvfi_probes         ),
+    .rvfi_dii_rtrn_vld_i   (rvfi_dii_rtrn_vld_i),
+    .rvfi_dii_inst_pack_i  (rvfi_dii_inst_pack_i),
+    .rvfi_dii_data_ready_o (rvfi_dii_data_ready_o),
 // Disable Debug when simulating with Spike
 `ifdef SPIKE_TANDEM
     .debug_req_i          ( 1'b0                ),
 `else
-    .debug_req_i          ( debug_req_core      ),
+    .debug_req_i          ( 1'b0      ),
 `endif
     .noc_req_o            ( axi_ariane_req      ),
     .noc_resp_i           ( axi_ariane_resp     )

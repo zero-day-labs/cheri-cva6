@@ -191,14 +191,14 @@ module ariane_peripherals #(
     // ---------------
     // 2. UART
     // ---------------
-    logic         uart_penable;
-    logic         uart_pwrite;
-    logic [31:0]  uart_paddr;
-    logic         uart_psel;
-    logic [31:0]  uart_pwdata;
-    logic [31:0]  uart_prdata;
-    logic         uart_pready;
-    logic         uart_pslverr;
+    (* mark_debug = "true" *) logic         uart_penable;
+    (* mark_debug = "true" *) logic         uart_pwrite;
+    (* mark_debug = "true" *) logic [31:0]  uart_paddr;
+    (* mark_debug = "true" *) logic         uart_psel;
+    (* mark_debug = "true" *) logic [31:0]  uart_pwdata;
+    (* mark_debug = "true" *) logic [31:0]  uart_prdata;
+    (* mark_debug = "true" *) logic         uart_pready;
+    (* mark_debug = "true" *) logic         uart_pslverr;
 
     axi2apb_64_32 #(
         .AXI4_ADDRESS_WIDTH ( AxiAddrWidth ),

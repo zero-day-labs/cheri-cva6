@@ -37,14 +37,14 @@ module scoreboard #(
     // rs1 operand address - issue_read_operands
     input  logic [ariane_pkg::REG_ADDR_SIZE-1:0] rs1_i,
     // rs1 operand - issue_read_operands
-    output logic [             CVA6Cfg.XLEN-1:0] rs1_o,
+    output logic [             CVA6Cfg.REGLEN-1:0] rs1_o,
     // rs1 operand is valid - issue_read_operands
     output logic                                 rs1_valid_o,
 
     // rs2 operand address - issue_read_operands
     input  logic [ariane_pkg::REG_ADDR_SIZE-1:0] rs2_i,
     // rs2 operand - issue_read_operands
-    output logic [             CVA6Cfg.XLEN-1:0] rs2_o,
+    output logic [             CVA6Cfg.REGLEN-1:0] rs2_o,
     // rs2 operand is valid - issue_read_operands
     output logic                                 rs2_valid_o,
 
@@ -87,7 +87,7 @@ module scoreboard #(
     // Transaction ID at which to write the result back - TO_BE_COMPLETED
     input logic [CVA6Cfg.NrWbPorts-1:0][CVA6Cfg.TRANS_ID_BITS-1:0] trans_id_i,
     // Results to write back - TO_BE_COMPLETED
-    input logic [CVA6Cfg.NrWbPorts-1:0][CVA6Cfg.XLEN-1:0] wbdata_i,
+    input logic [CVA6Cfg.NrWbPorts-1:0][CVA6Cfg.REGLEN-1:0] wbdata_i,
     // Exception from a functional unit (e.g.: ld/st exception) - TO_BE_COMPLETED
     input exception_t [CVA6Cfg.NrWbPorts-1:0] ex_i,
     // Indicates valid results - TO_BE_COMPLETED
@@ -203,8 +203,8 @@ module scoreboard #(
         end
         mem_n[trans_id_i[i]].sbe.result = wbdata_i[i];
         // save the target address of a branch (needed for debug in commit stage)
-        if (CVA6Cfg.DebugEn) begin
-          mem_n[trans_id_i[i]].sbe.bp.predict_address = resolved_branch_i.target_address;
+        if (CVA6Cfg.DebugEn || CVA6Cfg.RVFI_DII) begin
+          mem_n[trans_id_i[i]].sbe.bp.predict_address = resolved_branch_i.target_address[CVA6Cfg.XLEN-1:0];
         end
         if (mem_n[trans_id_i[i]].sbe.fu == ariane_pkg::CVXIF && ~x_we_i) begin
           mem_n[trans_id_i[i]].sbe.rd = 5'b0;
@@ -338,7 +338,8 @@ module scoreboard #(
   // ----------------------------------
   // read operand interface: same logic as register file
   logic [CVA6Cfg.NR_SB_ENTRIES+CVA6Cfg.NrWbPorts-1:0] rs1_fwd_req, rs2_fwd_req, rs3_fwd_req;
-  logic [CVA6Cfg.NR_SB_ENTRIES+CVA6Cfg.NrWbPorts-1:0][CVA6Cfg.XLEN-1:0] rs_data;
+  logic [CVA6Cfg.NR_SB_ENTRIES+CVA6Cfg.NrWbPorts-1:0][CVA6Cfg.REGLEN-1:0] rs_data;
+  logic [CVA6Cfg.NR_SB_ENTRIES+CVA6Cfg.NrWbPorts-1:0][CVA6Cfg.XLEN-1:0] rs3_data;
   logic rs1_valid, rs2_valid, rs3_valid;
 
   // WB ports have higher prio than entries
@@ -353,6 +354,7 @@ module scoreboard #(
         issue_instr_o[0].op
     )));
     assign rs_data[k] = wbdata_i[k];
+    assign rs3_data[k] = wbdata_i[k][CVA6Cfg.XLEN-1:0];
   end
   for (genvar k = 0; unsigned'(k) < CVA6Cfg.NR_SB_ENTRIES; k++) begin : gen_rs_entries
     assign rs1_fwd_req[k+CVA6Cfg.NrWbPorts] = (mem_q[k].sbe.rd == rs1_i) & mem_q[k].issued & mem_q[k].sbe.valid & (mem_q[k].is_rd_fpr_flag == (CVA6Cfg.FpPresent && ariane_pkg::is_rs1_fpr(
@@ -382,7 +384,7 @@ module scoreboard #(
   // this implicitly gives higher prio to WB ports
   rr_arb_tree #(
       .NumIn(CVA6Cfg.NR_SB_ENTRIES + CVA6Cfg.NrWbPorts),
-      .DataWidth(CVA6Cfg.XLEN),
+      .DataWidth(CVA6Cfg.REGLEN),
       .ExtPrio(1'b1),
       .AxiVldRdy(1'b1)
   ) i_sel_rs1 (
@@ -401,7 +403,7 @@ module scoreboard #(
 
   rr_arb_tree #(
       .NumIn(CVA6Cfg.NR_SB_ENTRIES + CVA6Cfg.NrWbPorts),
-      .DataWidth(CVA6Cfg.XLEN),
+      .DataWidth(CVA6Cfg.REGLEN),
       .ExtPrio(1'b1),
       .AxiVldRdy(1'b1)
   ) i_sel_rs2 (
@@ -432,7 +434,7 @@ module scoreboard #(
       .rr_i   ('0),
       .req_i  (rs3_fwd_req),
       .gnt_o  (),
-      .data_i (rs_data),
+      .data_i (rs3_data),
       .gnt_i  (1'b1),
       .req_o  (rs3_valid),
       .data_o (rs3),

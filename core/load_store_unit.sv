@@ -43,6 +43,8 @@ module load_store_unit
     input logic [31:0] tinst_i,
     // FU data needed to execute instruction - ISSUE_STAGE
     input fu_data_t fu_data_i,
+    // Current capability mode - ISSUE_STAGE
+    input  logic cap_mode_i,
     // Load Store Unit is ready - ISSUE_STAGE
     output logic lsu_ready_o,
     // Load Store Unit instruction is valid - ISSUE_STAGE
@@ -51,7 +53,7 @@ module load_store_unit
     // Load transaction ID - ISSUE_STAGE
     output logic [CVA6Cfg.TRANS_ID_BITS-1:0] load_trans_id_o,
     // Load result - ISSUE_STAGE
-    output logic [CVA6Cfg.XLEN-1:0] load_result_o,
+    output logic [CVA6Cfg.REGLEN-1:0] load_result_o,
     // Load result is valid - ISSUE_STAGE
     output logic load_valid_o,
     // Load exception - ISSUE_STAGE
@@ -60,7 +62,7 @@ module load_store_unit
     // Store transaction ID - ISSUE_STAGE
     output logic [CVA6Cfg.TRANS_ID_BITS-1:0] store_trans_id_o,
     // Store result - ISSUE_STAGE
-    output logic [CVA6Cfg.XLEN-1:0] store_result_o,
+    output logic [CVA6Cfg.REGLEN-1:0] store_result_o,
     // Store result is valid - ISSUE_STAGE
     output logic store_valid_o,
     // Store exception - ISSUE_STAGE
@@ -117,6 +119,8 @@ module load_store_unit
     input  logic             [      CVA6Cfg.PPNW-1:0] hgatp_ppn_i,
     // TO_BE_COMPLETED - TO_BE_COMPLETED
     input  logic             [CVA6Cfg.VMID_WIDTH-1:0] vmid_i,
+    // Default Data Capability - CSR_REGFILE
+    input  cva6_cheri_pkg::cap_reg_t     ddc_i,
     // TO_BE_COMPLETED - TO_BE_COMPLETED
     input  logic             [CVA6Cfg.ASID_WIDTH-1:0] asid_to_be_flushed_i,
     // TO_BE_COMPLETED - TO_BE_COMPLETED
@@ -177,9 +181,15 @@ module load_store_unit
   logic      [    CVA6Cfg.XLEN-1:0] vaddr_xlen;
   logic                             overflow;
   logic                             g_overflow;
-  logic      [(CVA6Cfg.XLEN/8)-1:0] be_i;
+  logic      [(CVA6Cfg.CLEN/8)-1:0] be_i;
 
-  assign vaddr_xlen = $unsigned($signed(fu_data_i.imm) + $signed(fu_data_i.operand_a));
+  if (CVA6Cfg.CheriPresent) begin : gen_vaddr_cheri
+    assign vaddr_xlen = (cap_mode_i || fu_data_i.operation == ariane_pkg::CLOAD_TAGS) ?
+                         $unsigned($signed(fu_data_i.operand_a[CVA6Cfg.XLEN-1:0])  + $signed(fu_data_i.imm)) :
+                         $unsigned($signed(ddc_i.addr) + $signed(fu_data_i.operand_a[CVA6Cfg.XLEN-1:0])  + $signed(fu_data_i.imm));
+  end else begin : gen_vaddr_no_cheri
+    assign vaddr_xlen = $unsigned($signed(fu_data_i.imm) + $signed(fu_data_i.operand_a));
+  end
   assign vaddr_i = vaddr_xlen[CVA6Cfg.VLEN-1:0];
   // we work with SV39 or SV32, so if VM is enabled, check that all bits [XLEN-1:38] or [XLEN-1:31] are equal
   assign overflow = (CVA6Cfg.IS_XLEN64 && (!((&vaddr_xlen[CVA6Cfg.XLEN-1:CVA6Cfg.SV-1]) == 1'b1 || (|vaddr_xlen[CVA6Cfg.XLEN-1:CVA6Cfg.SV-1]) == 1'b0)));
@@ -193,6 +203,9 @@ module load_store_unit
   logic                    ld_valid_i;
   logic                    ld_translation_req;
   logic                    st_translation_req;
+  logic                    cap_translation_req;
+  logic                    cap_st_translation_req;
+  logic                    cap_ld_translation_req;
   logic [CVA6Cfg.VLEN-1:0] ld_vaddr;
   logic [            31:0] ld_tinst;
   logic                    ld_hs_ld_st_inst;
@@ -205,6 +218,7 @@ module load_store_unit
   logic                    translation_valid;
   logic [CVA6Cfg.VLEN-1:0] mmu_vaddr;
   logic [CVA6Cfg.PLEN-1:0] mmu_paddr, mmu_vaddr_plen, fetch_vaddr_plen;
+  logic                     mmu_strip_tag;
   logic       [                     31:0] mmu_tinst;
   logic                                   mmu_hs_ld_st_inst;
   logic                                   mmu_hlvx_inst;
@@ -214,20 +228,32 @@ module load_store_unit
 
   logic                                   ld_valid;
   logic       [CVA6Cfg.TRANS_ID_BITS-1:0] ld_trans_id;
-  logic       [         CVA6Cfg.XLEN-1:0] ld_result;
+  logic       [         CVA6Cfg.REGLEN-1:0] ld_result;
   logic                                   st_valid;
   logic       [CVA6Cfg.TRANS_ID_BITS-1:0] st_trans_id;
-  logic       [         CVA6Cfg.XLEN-1:0] st_result;
+  logic       [         CVA6Cfg.REGLEN-1:0] st_result;
 
   logic       [                     11:0] page_offset;
   logic                                   page_offset_matches;
 
   exception_t                             misaligned_exception;
+  exception_t                             cheri_exception;
   exception_t                             ld_ex;
   exception_t                             st_ex;
 
   logic                                   hs_ld_st_inst;
   logic                                   hlvx_inst;
+  logic [5:0] fault_cap_idx;
+  cva6_cheri_pkg::cap_reg_t check_cap;
+  cva6_cheri_pkg::cap_meta_data_t check_cap_meta_data;
+  cva6_cheri_pkg::addrw_t check_cap_base;
+  cva6_cheri_pkg::addrwe_t check_cap_top;
+  cva6_cheri_pkg::addrwe_t check_cap_length;
+  cva6_cheri_pkg::addrw_t check_cap_offset;
+  cva6_cheri_pkg::addrw_t check_cap_address;
+  logic check_cap_is_sealed;
+
+  assign cap_translation_req = cap_st_translation_req || cap_ld_translation_req;
 
   logic [2:0] enable_translation, en_ld_st_translation, flush_tlb;
   logic [1:0] sum, mxr;
@@ -259,16 +285,19 @@ module load_store_unit
         .icache_areq_o(icache_areq_o),
         // misaligned bypass
         .misaligned_ex_i(misaligned_exception),
+        .cheri_ex_i             ( cheri_exception        ),
         .lsu_req_i(translation_req),
         .lsu_vaddr_i(mmu_vaddr),
         .lsu_tinst_i(mmu_tinst),
         .lsu_is_store_i(st_translation_req),
+        .lsu_is_cap_i           ( cap_translation_req    ),
         .csr_hs_ld_st_inst_o(csr_hs_ld_st_inst_o),
         .lsu_dtlb_hit_o(dtlb_hit),  // send in the same cycle as the request
         .lsu_dtlb_ppn_o(dtlb_ppn),  // send in the same cycle as the request
 
         .lsu_valid_o    (translation_valid),
         .lsu_paddr_o    (mmu_paddr),
+        .lsu_strip_tag_o        ( mmu_strip_tag          ),
         .lsu_exception_o(mmu_exception),
 
         .priv_lvl_i      (priv_lvl_i),
@@ -324,7 +353,7 @@ module load_store_unit
       end else begin
         mmu_paddr         <= mmu_vaddr_plen;
         translation_valid <= translation_req;
-        mmu_exception     <= misaligned_exception;
+        mmu_exception     <= (cheri_exception.valid) ?  cheri_exception : misaligned_exception;
       end
     end
   end
@@ -361,6 +390,7 @@ module load_store_unit
       .ex_o                 (st_ex),
       // MMU port
       .translation_req_o    (st_translation_req),
+      .cap_translation_req_o ( cap_st_translation_req ),
       .vaddr_o              (st_vaddr),
       .rvfi_mem_paddr_o     (rvfi_mem_paddr_o),
       .tinst_o              (st_tinst),
@@ -400,11 +430,13 @@ module load_store_unit
       .ex_o                 (ld_ex),
       // MMU port
       .translation_req_o    (ld_translation_req),
+      .cap_translation_req_o ( cap_ld_translation_req ),
       .vaddr_o              (ld_vaddr),
       .tinst_o              (ld_tinst),
       .hs_ld_st_inst_o      (ld_hs_ld_st_inst),
       .hlvx_inst_o          (ld_hlvx_inst),
       .paddr_i              (mmu_paddr),
+      .strip_tag_i           ( mmu_strip_tag        ),
       .ex_i                 (mmu_exception),
       .dtlb_hit_i           (dtlb_hit),
       .dtlb_ppn_i           (dtlb_ppn),
@@ -520,8 +552,9 @@ module load_store_unit
   // we can generate the byte enable from the virtual address since the last
   // 12 bit are the same anyway
   // and we can always generate the byte enable from the address at hand
-
-  if (CVA6Cfg.IS_XLEN64) begin : gen_8b_be
+  if (CVA6Cfg.CheriPresent) begin : gen_16b_be
+    assign be_i = be_gen_128(vaddr_i[3:0], extract_transfer_size(fu_data_i.operation));
+  end else if (CVA6Cfg.IS_XLEN64) begin : gen_8b_be
     assign be_i = be_gen(vaddr_i[2:0], extract_transfer_size(fu_data_i.operation));
   end else begin : gen_4b_be
     assign be_i = be_gen_32(vaddr_i[1:0], extract_transfer_size(fu_data_i.operation));
@@ -541,6 +574,12 @@ module load_store_unit
 
     if (lsu_ctrl.valid) begin
       case (lsu_ctrl.operation)
+      // double word
+        LC, SC, AMO_LRC, AMO_SCC, CLOAD_TAGS: begin
+          if (CVA6Cfg.CheriPresent && CVA6Cfg.IS_XLEN64 && lsu_ctrl.vaddr[3:0] != 4'b0000) begin
+            data_misaligned = 1'b1;
+          end
+        end
         // double word
         LD, SD, FLD, FSD,
                 AMO_LRD, AMO_SCD,
@@ -649,6 +688,102 @@ module load_store_unit
       end
     end
   end
+  if (CVA6Cfg.CheriPresent) begin
+  // ----------------
+    // Decode Cap Operands Fields
+    // ----------------
+    // TODO: ddc must be incremented
+    // Consider moving this to CHERI unit
+    always_comb begin
+      check_cap             = (cap_mode_i || lsu_ctrl.operation == ariane_pkg::CLOAD_TAGS) ? lsu_ctrl.operand_a : ddc_i;
+      fault_cap_idx         = (cap_mode_i || lsu_ctrl.operation == ariane_pkg::CLOAD_TAGS) ? {1'b0,lsu_ctrl.rs1} : {6'b100001};
+      check_cap_meta_data   = cva6_cheri_pkg::get_cap_reg_meta_data(check_cap);
+      check_cap_address     = check_cap.addr;
+      check_cap_base        = cva6_cheri_pkg::get_cap_reg_base(check_cap,check_cap_meta_data);
+      check_cap_top         = cva6_cheri_pkg::get_cap_reg_top(check_cap,check_cap_meta_data);
+      check_cap_length      = cva6_cheri_pkg::get_cap_reg_length(check_cap,check_cap_meta_data);
+      check_cap_offset      = cva6_cheri_pkg::get_cap_reg_offset(check_cap,check_cap_meta_data);
+      check_cap_is_sealed   = (check_cap.otype != cva6_cheri_pkg::UNSEALED_CAP);
+    end
+    // ------------------------
+    // CHERI Exception
+    // ------------------------
+    always_comb begin : data_cheri_exception
+        automatic cva6_cheri_pkg::cap_tval_t cheri_tval;
+        logic [CVA6Cfg.XLEN-1:0] size;
+
+        cheri_tval     = {CVA6Cfg.XLEN{1'b0}};
+        cheri_exception.cause = cva6_cheri_pkg::CAP_EXCEPTION;
+        cheri_exception.valid = 1'b0;
+        cheri_exception.tval  = {CVA6Cfg.XLEN{1'b0}};
+        cheri_exception.tval2 = {CVA6Cfg.GPLEN{1'b0}};
+        cheri_exception.tinst = {32{1'b0}};
+        cheri_exception.gva   =  v_i;
+
+        unique case (lsu_ctrl.operation)
+            ariane_pkg::LW, ariane_pkg::SW,
+            ariane_pkg::LWU, ariane_pkg::FLW,
+            ariane_pkg::HLV_W, ariane_pkg::HLV_WU,
+            ariane_pkg::HLVX_WU: begin
+                size = 4;
+            end
+            ariane_pkg::LH, ariane_pkg::SH,
+            ariane_pkg::LHU, ariane_pkg::FLH,
+            ariane_pkg::HLV_H, ariane_pkg::HLV_HU,
+            ariane_pkg::HLVX_HU: begin
+                size = 2;
+            end
+            ariane_pkg::LD, ariane_pkg::SD,
+            ariane_pkg::FLD, ariane_pkg::HSV_D,
+            ariane_pkg::HLV_D: begin
+                size = 8;
+            end
+            ariane_pkg::LC, ariane_pkg::SC, ariane_pkg::AMO_LRC, ariane_pkg::AMO_SCC, ariane_pkg::CLOAD_TAGS: begin
+                size = cva6_cheri_pkg::CLEN/8;
+            end
+            default:    size = 1;
+        endcase
+
+        if (lsu_ctrl.valid) begin
+            cheri_tval.cap_idx = fault_cap_idx;
+            if((check_cap_address < check_cap_base) || ((lsu_ctrl.vaddr +  size) > check_cap_top)) begin
+                cheri_tval.cause   = cva6_cheri_pkg::CAP_LENGTH_VIOLATION;
+                cheri_exception.valid     = 1'b1;
+            end
+
+            if (!check_cap.hperms.permit_load_cap && (lsu_ctrl.fu == LOAD) && (lsu_ctrl.operation inside{ariane_pkg::LC, ariane_pkg::AMO_LRC ,ariane_pkg::CLOAD_TAGS})) begin
+                cheri_tval.cause   = cva6_cheri_pkg::CAP_PERM_LD_CAP_VIOLATION;
+                cheri_exception.valid     = 1'b1;
+            end
+
+            if (!check_cap.hperms.permit_load && (lsu_ctrl.fu == LOAD)) begin
+                cheri_tval.cause   = cva6_cheri_pkg::CAP_PERM_LD_VIOLATION;
+                cheri_exception.valid     = 1'b1;
+            end
+
+            if (!check_cap.hperms.permit_store_cap && (lsu_ctrl.fu == STORE) && (lsu_ctrl.operation inside{ariane_pkg::SC,ariane_pkg::AMO_SCC})) begin
+                cheri_tval.cause   = cva6_cheri_pkg::CAP_PERM_ST_CAP_VIOLATION;
+                cheri_exception.valid     = 1'b1;
+            end
+
+            if (!check_cap.hperms.permit_store && (lsu_ctrl.fu == STORE)) begin
+                cheri_tval.cause   = cva6_cheri_pkg::CAP_PERM_ST_VIOLATION;
+                cheri_exception.valid     = 1'b1;
+            end
+
+            if (cva6_cheri_pkg::is_cap_reg_valid(check_cap) & check_cap_is_sealed) begin
+                cheri_tval.cause   = cva6_cheri_pkg::CAP_SEAL_VIOLATION;
+                cheri_exception.valid     = 1'b1;
+            end
+
+            if(!cva6_cheri_pkg::is_cap_reg_valid(check_cap)) begin
+                cheri_tval.cause   = cva6_cheri_pkg::CAP_TAG_VIOLATION;
+                cheri_exception.valid     = 1'b1;
+            end
+            cheri_exception.tval = cheri_tval;
+        end
+    end
+  end
 
   // ------------------
   // LSU Control
@@ -664,11 +799,13 @@ module load_store_unit
     hlvx_inst,
     overflow,
     g_overflow,
+    fu_data_i.operand_a,
     fu_data_i.operand_b,
     be_i,
     fu_data_i.fu,
     fu_data_i.operation,
-    fu_data_i.trans_id
+    fu_data_i.trans_id,
+    fu_data_i.rs1
   };
 
   lsu_bypass #(

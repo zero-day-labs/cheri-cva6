@@ -29,7 +29,8 @@ module ariane_regfile_fpga #(
     parameter config_pkg::cva6_cfg_t CVA6Cfg       = config_pkg::cva6_cfg_empty,
     parameter int unsigned           DATA_WIDTH    = 32,
     parameter int unsigned           NR_READ_PORTS = 2,
-    parameter bit                    ZERO_REG_ZERO = 0
+    parameter bit                    ZERO_REG_ZERO = 0,
+    parameter bit                    EN_CHERI_CAP  = 0
 ) (
     // clock and reset
     input  logic                                             clk_i,
@@ -42,7 +43,10 @@ module ariane_regfile_fpga #(
     // write port
     input  logic [CVA6Cfg.NrCommitPorts-1:0][           4:0] waddr_i,
     input  logic [CVA6Cfg.NrCommitPorts-1:0][DATA_WIDTH-1:0] wdata_i,
-    input  logic [CVA6Cfg.NrCommitPorts-1:0]                 we_i
+    input  logic [CVA6Cfg.NrCommitPorts-1:0]                 we_i,
+    input  logic [CVA6Cfg.NrCommitPorts-1:0]                 clr_i,
+    input  logic [CVA6Cfg.NrCommitPorts-1:0][7:0]            mask_i,   // mask bit
+    input  logic [CVA6Cfg.NrCommitPorts-1:0][1:0]            quarter_i // quarter selection
 );
 
   localparam ADDR_WIDTH = 5;
@@ -51,6 +55,9 @@ module ariane_regfile_fpga #(
 
   // Distributed RAM usually supports one write port per block - duplicate for each write port.
   logic [            NUM_WORDS-1:0][        DATA_WIDTH-1:0] mem             [CVA6Cfg.NrCommitPorts];
+  logic [NUM_WORDS-1:0]                                    v;
+  logic [CVA6Cfg.NrCommitPorts-1:0][NUM_WORDS-1:0]         sel;
+  logic [CVA6Cfg.NrCommitPorts-1:0][NUM_WORDS-1:0]         mask;
 
   logic [CVA6Cfg.NrCommitPorts-1:0][         NUM_WORDS-1:0] we_dec;
   logic [            NUM_WORDS-1:0][LOG_NR_WRITE_PORTS-1:0] mem_block_sel;

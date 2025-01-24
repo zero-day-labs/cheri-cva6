@@ -24,6 +24,8 @@ module compressed_decoder #(
 ) (
     // Input instruction coming from fetch stage - FRONTEND
     input  logic [31:0] instr_i,
+    // Input Capability Mode - FRONTEND
+    input  logic        cap_mode_i,
     // Output instruction in uncompressed format - decoder
     output logic [31:0] instr_o,
     // Input instruction is illegal - decoder
@@ -69,7 +71,20 @@ module compressed_decoder #(
           end
 
           riscv::OpcodeC0Fld: begin
-            if (CVA6Cfg.FpPresent) begin
+            if (CVA6Cfg.CheriPresent && cap_mode_i) begin
+                instr_o = {
+                  4'b0,
+                  instr_i[6:5],
+                  instr_i[12:10],
+                  3'b000,
+                  2'b01,
+                  instr_i[9:7],
+                  3'b010,
+                  2'b01,
+                  instr_i[4:2],
+                  riscv::OpcodeMiscMem
+                };
+            end if (CVA6Cfg.FpPresent) begin
               // c.fld -> fld rd', imm(rs1')
               // CLD: | funct3 | imm[5:3] | rs1' | imm[7:6] | rd' | C0 |
               instr_o = {
@@ -239,8 +254,23 @@ module compressed_decoder #(
           end
 
           riscv::OpcodeC0Fsd: begin
-            if (CVA6Cfg.FpPresent) begin
-              // c.fsd -> fsd rs2', imm(rs1')
+            // c.csc -> sc cd, offset(cs1') in capability mode
+            if (CVA6Cfg.CheriPresent && cap_mode_i) begin
+              instr_o = {
+                4'b0,
+                instr_i[6:5],
+                instr_i[12],
+                2'b01,
+                instr_i[4:2],
+                2'b01,
+                instr_i[9:7],
+                3'b100,
+                instr_i[11:10],
+                3'b000,
+                riscv::OpcodeStore
+              };
+            end if (CVA6Cfg.FpPresent) begin
+              // c.fsd -> fsd rs2', imm(rs1') in integer mode
               instr_o = {
                 4'b0,
                 instr_i[6:5],
@@ -756,7 +786,19 @@ module compressed_decoder #(
           end
 
           riscv::OpcodeC2Fldsp: begin
-            if (CVA6Cfg.FpPresent) begin
+            if (CVA6Cfg.CheriPresent && cap_mode_i) begin
+              instr_o = {
+                3'b0,
+                instr_i[4:2],
+                instr_i[12],
+                instr_i[6:5],
+                3'b000,
+                5'h02,
+                3'b010,
+                instr_i[11:7],
+                riscv::OpcodeMiscMem
+              };
+            end if (CVA6Cfg.FpPresent) begin
               // c.fldsp -> fld rd, imm(x2)
               instr_o = {
                 3'b0,
@@ -855,7 +897,19 @@ module compressed_decoder #(
           end
 
           riscv::OpcodeC2Fsdsp: begin
-            if (CVA6Cfg.FpPresent) begin
+            if (CVA6Cfg.CheriPresent && cap_mode_i) begin
+              instr_o = {
+                3'b0,
+                instr_i[9:7],
+                instr_i[12],
+                instr_i[6:2],
+                5'h02,
+                3'b100,
+                instr_i[11:10],
+                3'b000,
+                riscv::OpcodeStore
+              };
+            end if (CVA6Cfg.FpPresent) begin
               // c.fsdsp -> fsd rs2, imm(x2)
               instr_o = {
                 3'b0,

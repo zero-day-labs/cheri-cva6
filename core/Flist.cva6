@@ -60,6 +60,7 @@ ${CVA6_REPO_DIR}/core/cvfpu/src/fpu_div_sqrt_mvp/hdl/preprocess_mvp.sv
 ${CVA6_REPO_DIR}/core/include/config_pkg.sv
 ${CVA6_REPO_DIR}/core/include/${TARGET_CFG}_config_pkg.sv
 ${CVA6_REPO_DIR}/core/include/riscv_pkg.sv
+${CVA6_REPO_DIR}/core/include/cva6_cheri_pkg.sv
 // Note: depends on fpnew_pkg, above
 ${CVA6_REPO_DIR}/core/include/ariane_pkg.sv
 ${CVA6_REPO_DIR}/vendor/pulp-platform/axi/src/axi_pkg.sv
@@ -85,6 +86,9 @@ ${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/lfsr_8bit.sv
 ${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/stream_arbiter.sv
 ${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/stream_arbiter_flushable.sv
 ${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/stream_mux.sv
+${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/stream_fifo.sv
+${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/stream_xbar.sv
+${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/onehot_to_bin.sv
 ${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/stream_demux.sv
 ${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/lzc.sv
 ${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/rr_arb_tree.sv
@@ -100,6 +104,7 @@ ${CVA6_REPO_DIR}/vendor/pulp-platform/common_cells/src/delta_counter.sv
 // Top-level source files (not necessarily instantiated at the top of the cva6).
 ${CVA6_REPO_DIR}/core/cva6.sv
 ${CVA6_REPO_DIR}/core/cva6_rvfi_probes.sv
+${CVA6_REPO_DIR}/core/rvfi_dii_generator.sv
 ${CVA6_REPO_DIR}/core/alu.sv
 // Note: depends on fpnew_pkg, above
 ${CVA6_REPO_DIR}/core/fpu_wrap.sv
@@ -120,6 +125,7 @@ ${CVA6_REPO_DIR}/core/load_store_unit.sv
 ${CVA6_REPO_DIR}/core/lsu_bypass.sv
 ${CVA6_REPO_DIR}/core/mult.sv
 ${CVA6_REPO_DIR}/core/multiplier.sv
+${CVA6_REPO_DIR}/core/cheri_unit.sv
 ${CVA6_REPO_DIR}/core/serdiv.sv
 ${CVA6_REPO_DIR}/core/perf_counters.sv
 ${CVA6_REPO_DIR}/core/ariane_regfile_ff.sv

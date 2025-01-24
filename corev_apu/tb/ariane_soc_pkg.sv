@@ -66,6 +66,12 @@ package ariane_soc;
     DRAMBase     = 64'h8000_0000
   } soc_bus_start_t;
 
+  localparam int unsigned TagCacheMemLength = {64'h00010000};
+  localparam int unsigned TagCacheMemBase = DRAMBase + DRAMLength - TagCacheMemLength;
+  localparam int unsigned SetAssociativity = 32'd8;
+  localparam int unsigned NumLines = 32'd128;
+  localparam int unsigned NumBlocks = 32'd4;
+
   localparam NrRegion = 1;
   localparam logic [NrRegion-1:0][NB_PERIPHERALS-1:0] ValidRule = {{NrRegion * NB_PERIPHERALS}{1'b1}};
 

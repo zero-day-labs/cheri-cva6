@@ -51,11 +51,13 @@ module store_unit
     // Transaction ID - ISSUE_STAGE
     output logic [CVA6Cfg.TRANS_ID_BITS-1:0] trans_id_o,
     // Store result - ISSUE_STAGE
-    output logic [CVA6Cfg.XLEN-1:0] result_o,
+    output logic [CVA6Cfg.REGLEN-1:0] result_o,
     // Store exception output - TO_BE_COMPLETED
     output exception_t ex_o,
     // Address translation request - TO_BE_COMPLETED
     output logic translation_req_o,
+    // Capability translation request - TO_BE_COMPLETED
+    output logic cap_translation_req_o,
     // Virtual address - TO_BE_COMPLETED
     output logic [CVA6Cfg.VLEN-1:0] vaddr_o,
     // RVFI information - RVFI
@@ -87,25 +89,59 @@ module store_unit
 );
 
   // align data to address e.g.: shift data to be naturally 64
-  function automatic [CVA6Cfg.XLEN-1:0] data_align(logic [2:0] addr, logic [63:0] data);
+  /* function automatic [CVA6Cfg.CLEN-1:0] data_align (logic [CVA6Cfg.DCACHE_DATA_SIZE_WIDTH-1:0] addr, logic [CVA6Cfg.CLEN-1:0] data);
+        // Set addr[2] to 1'b0 when 32bits
+        logic [CVA6Cfg.DCACHE_DATA_SIZE_WIDTH-1:0] addr_tmp = {addr[CVA6Cfg.DCACHE_DATA_SIZE_WIDTH-1:2], addr[1:0]};
+        logic [CVA6Cfg.CLEN-1:0] data_tmp = {CVA6Cfg.CLEN-1{1'b0}};
+        logic [6:0] shift_data = {addr_tmp, 3'b000};
+
+        case (addr_tmp)
+            3'b000: data_tmp[cva6_cheri_pkg::CLEN-1:0] = {data[riscv::CLEN-1:0]};
+            3'b001: data_tmp[cva6_cheri_pkg::CLEN-1:0] = {data[riscv::CLEN-9:0],  data[riscv::CLEN-1:riscv::CLEN-8]};
+            3'b010: data_tmp[cva6_cheri_pkg::CLEN-1:0] = {data[riscv::CLEN-17:0], data[riscv::CLEN-1:riscv::CLEN-16]};
+            3'b011: data_tmp[cva6_cheri_pkg::CLEN-1:0] = {data[riscv::CLEN-25:0], data[riscv::CLEN-1:riscv::CLEN-24]};
+            3'b100: data_tmp = {data[31:0], data[63:32]};
+            3'b101: data_tmp = {data[23:0], data[63:24]};
+            3'b110: data_tmp = {data[15:0], data[63:16]};
+            3'b111: data_tmp = {data[7:0],  data[63:8]};
+        endcase
+
+        data_tmp  = {data << shift_data};
+        return data_tmp;
+  endfunction */
+
+  // align data to address e.g.: shift data to be naturally 64
+  function automatic [CVA6Cfg.CLEN-1:0] data_align(logic [3:0] addr, logic [CVA6Cfg.CLEN-1:0] data);
     // Set addr[2] to 1'b0 when 32bits
-    logic [ 2:0] addr_tmp = {(addr[2] && CVA6Cfg.IS_XLEN64), addr[1:0]};
-    logic [63:0] data_tmp = {64{1'b0}};
+    logic [ 3:0] addr_tmp = {(addr[3] && CVA6Cfg.IS_XLEN64 && CVA6Cfg.CheriPresent ), (addr[2] && CVA6Cfg.IS_XLEN64), addr[1:0]};
+    logic [CVA6Cfg.CLEN-1:0] data_tmp = {CVA6Cfg.CLEN{1'b0}};
     case (addr_tmp)
-      3'b000: data_tmp[CVA6Cfg.XLEN-1:0] = {data[CVA6Cfg.XLEN-1:0]};
-      3'b001:
+      4'b0000: data_tmp[CVA6Cfg.XLEN-1:0] = {data[CVA6Cfg.XLEN-1:0]};
+      4'b0001:
       data_tmp[CVA6Cfg.XLEN-1:0] = {data[CVA6Cfg.XLEN-9:0], data[CVA6Cfg.XLEN-1:CVA6Cfg.XLEN-8]};
-      3'b010:
+      4'b0010:
       data_tmp[CVA6Cfg.XLEN-1:0] = {data[CVA6Cfg.XLEN-17:0], data[CVA6Cfg.XLEN-1:CVA6Cfg.XLEN-16]};
-      3'b011:
+      4'b0011:
       data_tmp[CVA6Cfg.XLEN-1:0] = {data[CVA6Cfg.XLEN-25:0], data[CVA6Cfg.XLEN-1:CVA6Cfg.XLEN-24]};
-      3'b100: data_tmp = {data[31:0], data[63:32]};
-      3'b101: data_tmp = {data[23:0], data[63:24]};
-      3'b110: data_tmp = {data[15:0], data[63:16]};
-      3'b111: data_tmp = {data[7:0], data[63:8]};
+      4'b0100: data_tmp[CVA6Cfg.XLEN-1:0] = {data[31:0], data[63:32]};
+      4'b0101: data_tmp[CVA6Cfg.XLEN-1:0] = {data[23:0], data[63:24]};
+      4'b0110: data_tmp[CVA6Cfg.XLEN-1:0] = {data[15:0], data[63:16]};
+      4'b0111: data_tmp[CVA6Cfg.XLEN-1:0] = {data[7:0], data[63:8]};
+      4'b1000: data_tmp[CVA6Cfg.CLEN-1:CVA6Cfg.XLEN] = {data[CVA6Cfg.XLEN-1:0]};
+      4'b1001:
+      data_tmp[CVA6Cfg.CLEN-1:CVA6Cfg.XLEN] = {data[CVA6Cfg.XLEN-9:0], data[CVA6Cfg.XLEN-1:CVA6Cfg.XLEN-8]};
+      4'b1010:
+      data_tmp[CVA6Cfg.CLEN-1:CVA6Cfg.XLEN] = {data[CVA6Cfg.XLEN-17:0], data[CVA6Cfg.XLEN-1:CVA6Cfg.XLEN-16]};
+      4'b1011:
+      data_tmp[CVA6Cfg.CLEN-1:CVA6Cfg.XLEN] = {data[CVA6Cfg.XLEN-25:0], data[CVA6Cfg.XLEN-1:CVA6Cfg.XLEN-24]};
+      4'b1100: data_tmp[CVA6Cfg.CLEN-1:CVA6Cfg.XLEN] = {data[31:0], data[63:32]};
+      4'b1101: data_tmp[CVA6Cfg.CLEN-1:CVA6Cfg.XLEN] = {data[23:0], data[63:24]};
+      4'b1110: data_tmp[CVA6Cfg.CLEN-1:CVA6Cfg.XLEN] = {data[15:0], data[63:16]};
+      4'b1111: data_tmp[CVA6Cfg.CLEN-1:CVA6Cfg.XLEN] = {data[7:0], data[63:8]};
     endcase
-    return data_tmp[CVA6Cfg.XLEN-1:0];
+    return data_tmp;
   endfunction
+
 
   // it doesn't matter what we are writing back as stores don't return anything
   assign result_o = lsu_ctrl_i.data;
@@ -123,11 +159,16 @@ module store_unit
   logic st_valid;
   logic st_valid_without_flush;
   logic instr_is_amo;
+  logic instr_is_cap;
+  logic cap_translation_req;
   assign instr_is_amo = is_amo(lsu_ctrl_i.operation);
+  assign instr_is_cap = (CVA6Cfg.CheriPresent) ? is_cap(lsu_ctrl_i.operation) : 1'b0;
+  assign cap_translation_req = lsu_ctrl_i.operation inside {ariane_pkg::SC} ? 1'b1 : 1'b0;
   // keep the data and the byte enable for the second cycle (after address translation)
-  logic [CVA6Cfg.XLEN-1:0] st_data_n, st_data_q;
-  logic [(CVA6Cfg.XLEN/8)-1:0] st_be_n, st_be_q;
-  logic [1:0] st_data_size_n, st_data_size_q;
+  logic [CVA6Cfg.CLEN-1:0] st_data_n, st_data_q;
+  logic [CVA6Cfg.CheriCapTagWidth-1:0] st_cap_tag_n, st_cap_tag_q;
+  logic [(CVA6Cfg.CLEN/8)-1:0] st_be_n, st_be_q;
+  logic [CVA6Cfg.DCACHE_DATA_SIZE_WIDTH-1:0] st_data_size_n, st_data_size_q;
   amo_t amo_op_d, amo_op_q;
 
   logic [CVA6Cfg.TRANS_ID_BITS-1:0] trans_id_n, trans_id_q;
@@ -148,6 +189,9 @@ module store_unit
     ex_o                   = ex_i;
     trans_id_n             = lsu_ctrl_i.trans_id;
     state_d                = state_q;
+    if (CVA6Cfg.CheriPresent) begin
+      cap_translation_req_o  = 1'b0;
+    end
 
     case (state_q)
       // we got a valid store
@@ -155,6 +199,9 @@ module store_unit
         if (valid_i) begin
           state_d = VALID_STORE;
           translation_req_o = 1'b1;
+          if (CVA6Cfg.CheriPresent) begin
+            cap_translation_req_o = cap_translation_req;
+          end
           pop_st_o = 1'b1;
           // check if translation was valid and we have space in the store buffer
           // otherwise simply stall
@@ -181,6 +228,9 @@ module store_unit
         if ((valid_i && CVA6Cfg.RVA && !instr_is_amo) || (valid_i && !CVA6Cfg.RVA)) begin
 
           translation_req_o = 1'b1;
+          if (CVA6Cfg.CheriPresent) begin
+            cap_translation_req_o = cap_translation_req;
+          end
           state_d = VALID_STORE;
           pop_st_o = 1'b1;
 
@@ -203,6 +253,9 @@ module store_unit
       WAIT_STORE_READY: begin
         // keep the translation request high
         translation_req_o = 1'b1;
+        if (CVA6Cfg.CheriPresent) begin
+          cap_translation_req_o = cap_translation_req;
+        end
 
         if (st_ready && dtlb_hit_i) begin
           state_d = IDLE;
@@ -215,6 +268,9 @@ module store_unit
         // it wasn't full
         if (state_q == WAIT_TRANSLATION && CVA6Cfg.MmuPresent) begin
           translation_req_o = 1'b1;
+          if (CVA6Cfg.CheriPresent) begin
+            cap_translation_req_o = cap_translation_req;
+          end
 
           if (dtlb_hit_i) begin
             state_d = IDLE;
@@ -241,19 +297,33 @@ module store_unit
   // -----------
   // Re-aligner
   // -----------
-  // re-align the write data to comply with the address offset
+  // re-align the write data to comply with the address offse
+  logic [CVA6Cfg.CLEN-1:0] st_cap_mem;
   always_comb begin
+    automatic cva6_cheri_pkg::cap_reg_t tmp_cap;
+    automatic cva6_cheri_pkg::cap_mem_t tmp_mem_cap;
+
+    tmp_cap = lsu_ctrl_i.data;
+    tmp_mem_cap = cva6_cheri_pkg::cap_reg_to_cap_mem(lsu_ctrl_i.data);
     st_be_n = lsu_ctrl_i.be;
     // don't shift the data if we are going to perform an AMO as we still need to operate on this data
-    st_data_n = (CVA6Cfg.RVA && instr_is_amo) ? lsu_ctrl_i.data[CVA6Cfg.XLEN-1:0] :
-        data_align(lsu_ctrl_i.vaddr[2:0], {{64 - CVA6Cfg.XLEN{1'b0}}, lsu_ctrl_i.data});
+    st_cap_mem = tmp_mem_cap[CLEN-1:0] ^ cva6_cheri_pkg::MEM_NULL_CAP[CVA6Cfg.CLEN-1:0];
+    st_data_n = (CVA6Cfg.CheriPresent && instr_is_cap) ? st_cap_mem[CVA6Cfg.CLEN-1:0] :
+                    (CVA6Cfg.RVA && instr_is_amo) ? {{CVA6Cfg.CLEN-CVA6Cfg.XLEN{1'b0}}, lsu_ctrl_i.data[CVA6Cfg.XLEN-1:0]}
+                                 : data_align(lsu_ctrl_i.vaddr[3:0], {{CVA6Cfg.CLEN-CVA6Cfg.XLEN{1'b0}}, lsu_ctrl_i.data[CVA6Cfg.XLEN-1:0]});
+    if (CVA6Cfg.CheriPresent) begin
+      st_cap_tag_n = instr_is_cap ? tmp_cap.tag
+                                    : 1'b0;
+    end else begin
+       st_cap_tag_n = '0;
+    end
     st_data_size_n = extract_transfer_size(lsu_ctrl_i.operation);
     // save AMO op for next cycle
     if (CVA6Cfg.RVA) begin
       case (lsu_ctrl_i.operation)
-        AMO_LRW, AMO_LRD:     amo_op_d = AMO_LR;
-        AMO_SCW, AMO_SCD:     amo_op_d = AMO_SC;
-        AMO_SWAPW, AMO_SWAPD: amo_op_d = AMO_SWAP;
+        AMO_LRW, AMO_LRD, AMO_LRC:     amo_op_d = AMO_LR;
+        AMO_SCW, AMO_SCD, AMO_SCC:     amo_op_d = AMO_SC;
+        AMO_SWAPW, AMO_SWAPD, AMO_SWAPC: amo_op_d = AMO_SWAP;
         AMO_ADDW, AMO_ADDD:   amo_op_d = AMO_ADD;
         AMO_ANDW, AMO_ANDD:   amo_op_d = AMO_AND;
         AMO_ORW, AMO_ORD:     amo_op_d = AMO_OR;
@@ -307,6 +377,7 @@ module store_unit
       .paddr_i,
       .rvfi_mem_paddr_o     (rvfi_mem_paddr_o),
       .data_i               (st_data_q),
+      .cap_tag_i            (st_cap_tag_q),
       .be_i                 (st_be_q),
       .data_size_i          (st_data_size_q),
       .req_port_i           (req_port_i),
@@ -325,6 +396,7 @@ module store_unit
         .paddr_i           (paddr_i),
         .amo_op_i          (amo_op_q),
         .data_i            (st_data_q),
+        .cap_tag_i         (st_cap_tag_q),
         .data_size_i       (st_data_size_q),
         .amo_req_o         (amo_req_o),
         .amo_resp_i        (amo_resp_i),
@@ -347,6 +419,9 @@ module store_unit
       st_data_size_q <= '0;
       trans_id_q     <= '0;
       amo_op_q       <= AMO_NONE;
+      if (CVA6Cfg.CheriPresent) begin
+        st_cap_tag_q   <= '0;
+      end
     end else begin
       state_q        <= state_d;
       st_be_q        <= st_be_n;
@@ -354,6 +429,9 @@ module store_unit
       trans_id_q     <= trans_id_n;
       st_data_size_q <= st_data_size_n;
       amo_op_q       <= amo_op_d;
+      if (CVA6Cfg.CheriPresent) begin
+        st_cap_tag_q   <= st_cap_tag_n;
+      end
     end
   end
 
