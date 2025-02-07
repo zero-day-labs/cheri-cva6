@@ -153,9 +153,7 @@ module wt_dcache_mem
                                                                 '0;
       assign bank_wdata[k][j] = (wr_cl_we_i[j] & wr_cl_vld_i) ?  wr_cl_data_i[k*CVA6Cfg.CLEN +: CVA6Cfg.CLEN] :
                                                                  wr_data_i;
-      //assign bank_wuser[k][j] = (wr_cl_we_i[j] & wr_cl_vld_i) ?  {CVA6Cfg.CLEN{wr_cl_user_i[(CVA6Cfg.CLEN/CVA6Cfg.XLEN) * k*CVA6Cfg.DCACHE_USER_WIDTH +: CVA6Cfg.DCACHE_USER_WIDTH]}} :
-      //                                                           {CVA6Cfg.CLEN{wr_user_i}};
-      assign bank_wuser[k][j] = (wr_cl_we_i[j] & wr_cl_vld_i) ?  {CVA6Cfg.CLEN{wr_cl_user_i[k*CVA6Cfg.DCACHE_USER_WIDTH +: CVA6Cfg.DCACHE_USER_WIDTH]}} :
+      assign bank_wuser[k][j] = (wr_cl_we_i[j] & wr_cl_vld_i) ?  {CVA6Cfg.CLEN{wr_cl_user_i[(CVA6Cfg.CLEN/CVA6Cfg.XLEN) * k *CVA6Cfg.DCACHE_USER_WIDTH +: CVA6Cfg.DCACHE_USER_WIDTH]}} :
                                                                    {CVA6Cfg.CLEN{wr_user_i}};
 
     end

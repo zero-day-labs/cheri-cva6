@@ -69,24 +69,21 @@ module branch_unit #(
   cva6_cheri_pkg::addrwe_t target_pcc_top;
   cva6_cheri_pkg::addrw_t target_pcc_address;
   logic target_pcc_is_sealed;
-  assign target_pcc = cva6_cheri_pkg::cap_pcc_t'(target_address);
-  assign pcc = cva6_cheri_pkg::cap_pcc_t'(pc_i);
-  assign cap_mode       = pcc.flags.cap_mode || fu_data_i.operation inside {ariane_pkg::CJALR, ariane_pkg::CINVOKE};
-  assign operand_a      = cva6_cheri_pkg::cap_reg_to_cap_pcc(fu_data_i.operand_a);
-  assign pcc_base       = pcc.base;
-  logic [CVA6Cfg.VLEN-1:0] jump_base_addr;
-  logic [CVA6Cfg.VLEN-1:0] jump_base;
-  cva6_cheri_pkg::cap_pcc_t jump_base_cap;
-  cva6_cheri_pkg::cap_pcc_t next_pc_tmp, target_address_tmp;
+  assign target_pcc = CVA6Cfg.CheriPresent ? cva6_cheri_pkg::cap_pcc_t'(target_address) : target_address;
+  assign pcc = CVA6Cfg.CheriPresent ? cva6_cheri_pkg::cap_pcc_t'(pc_i) : pc_i;
+  assign cap_mode = CVA6Cfg.CheriPresent ? (pcc.flags.cap_mode || fu_data_i.operation inside {ariane_pkg::CJALR, ariane_pkg::CINVOKE}) : 1'b0;
+  assign operand_a = CVA6Cfg.CheriPresent ? cva6_cheri_pkg::cap_reg_to_cap_pcc(fu_data_i.operand_a) : fu_data_i.operand_a;
+  assign pcc_base = CVA6Cfg.CheriPresent ? pcc.base : '0;
 
   // here we handle the various possibilities of mis-predicts
   always_comb begin : mispredict_handler
     // set the jump base, for JALR we need to look at the register, for all other control flow instructions we can take the current PC
-    //automatic logic [CVA6Cfg.VLEN-1:0] jump_base;
-    //automatic logic [CVA6Cfg.VLEN-1:0] jump_base_addr;
+    automatic logic [CVA6Cfg.VLEN-1:0] jump_base;
+    automatic logic [CVA6Cfg.VLEN-1:0] jump_base_addr;
     automatic logic [CVA6Cfg.VLEN-1:0] next_pc_off;
     automatic logic [CVA6Cfg.VLEN-1:0] next_pc_addr;
-    //cva6_cheri_pkg::cap_pcc_t next_pc_tmp, target_address_tmp;
+    automatic cva6_cheri_pkg::cap_pcc_t jump_base_cap;
+    automatic cva6_cheri_pkg::cap_pcc_t next_pc_tmp, target_address_tmp;
     // TODO(zarubaf): The ALU can be used to calculate the branch target
     jump_base = (fu_data_i.operation inside {ariane_pkg::JALR, ariane_pkg::CJALR, ariane_pkg::CINVOKE}) ? fu_data_i.operand_a[CVA6Cfg.VLEN-1:0] : pc_i[CVA6Cfg.VLEN-1:0];
     jump_base_cap = CVA6Cfg.CheriPresent ? ((fu_data_i.operation inside {ariane_pkg::CJALR, ariane_pkg::CINVOKE}) ? operand_a : pc_i) : '0;
@@ -94,10 +91,9 @@ module branch_unit #(
                             operand_a.addr :
                             $unsigned($signed(jump_base) + $signed(fu_data_i.imm[CVA6Cfg.VLEN-1:0]))) : '0;
 
-    target_address = '0;
-    branch_result_o = cva6_cheri_pkg::REG_NULL_CAP;
     next_pc_tmp = '0;
     target_address_tmp = '0;
+    branch_result_o = CVA6Cfg.CheriPresent ? cva6_cheri_pkg::REG_NULL_CAP : '0;
     resolve_branch_o = 1'b0;
     resolved_branch_o.target_address = '0;
     resolved_branch_o.is_taken = 1'b0;
@@ -140,7 +136,6 @@ module branch_unit #(
         end else begin
           next_pc_tmp = next_pc;
         end
-        // branch_result_o = cva6_cheri_pkg::cap_pcc_to_cap_reg(next_pc);
     end
     branch_result_o = cva6_cheri_pkg::cap_pcc_to_cap_reg(next_pc_tmp);
     end else begin
@@ -206,7 +201,7 @@ module branch_unit #(
     if (branch_valid_i && (target_address[0] || ((!CVA6Cfg.RVC || CVA6Cfg.RVFI_DII) && target_address[1])) && jump_taken) begin
       branch_exception_o.valid = 1'b1;
     end
-    if (CVA6Cfg.CheriPresent && branch_valid_i /* && !ariane_pkg::op_is_branch(fu_data_i.operation) */ && jump_taken) begin
+    if (CVA6Cfg.CheriPresent && branch_valid_i && jump_taken) begin
             if ((fu_data_i.operation inside {ariane_pkg::CJALR} && cap_mode)) begin
                 if (target_pcc_base[0] != 1'b0) begin
                     branch_exception_o.cause = cva6_cheri_pkg::CAP_EXCEPTION;
@@ -253,11 +248,11 @@ module branch_unit #(
                cheri_tval.cap_idx       = {6'b100000};
                branch_exception_o.valid = 1'b1;
             end
-        end
-        // Update tval
-        branch_exception_o.tval = cheri_tval;
-        if (clu_exception_i.valid && fu_data_i.operation inside {ariane_pkg::CINVOKE}) begin
-          branch_exception_o = clu_exception_i;
+            // Update tval
+            branch_exception_o.tval = cheri_tval;
+            if (CVA6Cfg.CheriPresent && clu_exception_i.valid && fu_data_i.operation inside {ariane_pkg::CINVOKE}) begin
+              branch_exception_o = clu_exception_i;
+            end
         end
   end
 endmodule

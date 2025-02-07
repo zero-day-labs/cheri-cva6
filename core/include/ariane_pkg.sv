@@ -856,26 +856,26 @@ package ariane_pkg;
   // ----------------------
   function automatic logic [2:0] extract_transfer_size(fu_op op);
     case (op)
-     LC, SC, CLOAD_TAGS: begin
-                return 3'b100;
-            end
+      AMO_LRC, AMO_SCC, LC, SC, CLOAD_TAGS: begin
+        return 3'b100;
+      end
       LD, HLV_D, SD, HSV_D, FLD, FSD,
-            AMO_LRD,   AMO_SCD,
-            AMO_SWAPD, AMO_ADDD,
-            AMO_ANDD,  AMO_ORD,
-            AMO_XORD,  AMO_MAXD,
-            AMO_MAXDU, AMO_MIND,
-            AMO_MINDU: begin
+      AMO_LRD,   AMO_SCD,
+      AMO_SWAPD, AMO_ADDD,
+      AMO_ANDD,  AMO_ORD,
+      AMO_XORD,  AMO_MAXD,
+      AMO_MAXDU, AMO_MIND,
+      AMO_MINDU: begin
         return 3'b011;
       end
       LW, LWU, HLV_W, HLV_WU, HLVX_WU,
-            SW, HSV_W, FLW, FSW,
-            AMO_LRW,   AMO_SCW,
-            AMO_SWAPW, AMO_ADDW,
-            AMO_ANDW,  AMO_ORW,
-            AMO_XORW,  AMO_MAXW,
-            AMO_MAXWU, AMO_MINW,
-            AMO_MINWU: begin
+      SW, HSV_W, FLW, FSW,
+      AMO_LRW,   AMO_SCW,
+      AMO_SWAPW, AMO_ADDW,
+      AMO_ANDW,  AMO_ORW,
+      AMO_XORW,  AMO_MAXW,
+      AMO_MAXWU, AMO_MINW,
+      AMO_MINWU: begin
         return 3'b010;
       end
       LH, LHU, HLV_H, HLV_HU, HLVX_HU, SH, HSV_H, FLH, FSH: return 3'b001;

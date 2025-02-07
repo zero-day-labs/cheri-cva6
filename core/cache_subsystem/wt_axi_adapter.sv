@@ -65,6 +65,7 @@ module wt_axi_adapter
   localparam AxiRdBlenIcache = CVA6Cfg.ICACHE_LINE_WIDTH / CVA6Cfg.AxiDataWidth - 1;
   localparam AxiRdBlenDcache = CVA6Cfg.DCACHE_LINE_WIDTH / CVA6Cfg.AxiDataWidth - 1;
   localparam AxiWdBlenDcache = CVA6Cfg.CLEN / CVA6Cfg.AxiDataWidth - 1;
+  localparam AxiRdCapBlenDcache = CVA6Cfg.CLEN / CVA6Cfg.AxiDataWidth - 1;
   localparam AxiWNumWords = (CVA6Cfg.CLEN/CVA6Cfg.AxiDataWidth);
 
   ///////////////////////////////////////////////////////
@@ -178,8 +179,10 @@ module wt_axi_adapter
       axi_rd_addr = {{CVA6Cfg.AxiAddrWidth - CVA6Cfg.PLEN{1'b0}}, dcache_data.paddr};
       // If dcache_data.size MSB is set, we want to read as much as possible
       axi_rd_size = dcache_data.size[2] ? MaxNumWords[2:0] : dcache_data.size;
-      if (dcache_data.size[2]) begin
+      if (dcache_data.size[2:0] == 3'b111) begin
         axi_rd_blen = AxiRdBlenDcache[$clog2(AxiNumWords)-1:0];
+      end else if (dcache_data.size[2:0] == 3'b100) begin
+        axi_rd_blen = AxiRdCapBlenDcache[$clog2(AxiNumWords)-1:0];
       end
     end else begin
       // Cast to AXI address width
@@ -545,6 +548,13 @@ module wt_axi_adapter
       dcache_rd_shift_user_d[0] = '0;
       dcache_rd_shift_d[0][amo_off_q*8] = (wr_exokay) ? '0 : 1'b1;
       dcache_rd_shift_user_d[0][amo_off_q*8] = (wr_exokay) ? '0 : 1'b1;
+      // replicate also the second word
+        if (CVA6Cfg.CheriPresent) begin
+          for(int i = 1; i < CVA6Cfg.DCACHE_LINE_WIDTH/CVA6Cfg.AxiDataWidth; i++) begin
+            dcache_rd_shift_d[i][amo_off_q*8] = (wr_exokay) ? '0 : 1'b1;
+            dcache_rd_shift_user_d[i][amo_off_q*8] = (wr_exokay) ? '0 : 1'b1;
+          end
+      end
     end
   end
 

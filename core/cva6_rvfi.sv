@@ -156,8 +156,8 @@ module cva6_rvfi
   assign wdata = instr.wdata;
 
   assign lsu_addr = instr.lsu_ctrl_vaddr;
-  assign lsu_rmask = instr.lsu_ctrl_fu == LOAD ? instr.lsu_ctrl_be : '0;
-  assign lsu_wmask = instr.lsu_ctrl_fu == STORE ? instr.lsu_ctrl_be : '0;
+  assign lsu_rmask = (instr.lsu_ctrl_fu == LOAD || (((mem_q[lsu_addr_trans_id].instr & 32'hF800703F) == 32'h1000402F)) && instr.lsu_ctrl_fu == STORE) ? instr.lsu_ctrl_be : '0;
+  assign lsu_wmask = (instr.lsu_ctrl_fu == STORE && !((mem_q[lsu_addr_trans_id].instr  & 32'hF800703F) == 32'h1000402F)) ? instr.lsu_ctrl_be : '0;
   assign lsu_addr_trans_id = instr.lsu_ctrl_trans_id;
 
 
@@ -282,8 +282,8 @@ module cva6_rvfi
       rvfi_instr_o[i].cause <= ex_commit_cause;
       rvfi_instr_o[i].mode <= (CVA6Cfg.DebugEn && debug_mode) ? 2'b10 : priv_lvl;
       rvfi_instr_o[i].ixl <= CVA6Cfg.XLEN == 64 ? 2 : 1;
-      rvfi_instr_o[i].rs1_addr <= commit_instr_rs1[i][4:0];
-      rvfi_instr_o[i].rs2_addr <= commit_instr_rs2[i][4:0];
+      rvfi_instr_o[i].rs1_addr <= (((mem_q[commit_pointer[i]].instr & 32'hF800703F) == 32'h1800402F) && wdata[i] == 1) ? '0 : commit_instr_rs1[i][4:0];
+      rvfi_instr_o[i].rs2_addr <= (((mem_q[commit_pointer[i]].instr & 32'hF800703F) == 32'h1800402F) && wdata[i] == 1) ? '0 : commit_instr_rs2[i][4:0];
       rvfi_instr_o[i].rd_addr <= commit_instr_rd[i][4:0];
       rvfi_instr_o[i].rd_wdata <= (rvfi_instr_o[i].rd_addr == 0) ? '0 : (CVA6Cfg.FpPresent && is_rd_fpr(
           commit_instr_op[i]
@@ -292,15 +292,15 @@ module cva6_rvfi
       if (mem_q[commit_pointer[i]].instr == 32'h30200073 && !exception) begin
         rvfi_instr_o[i].pc_wdata <= csr.mepcc_q[63:0];
       end else if (mem_q[commit_pointer[i]].instr == 32'h10200073 && !exception) begin
-        rvfi_instr_o[i].pc_wdata <= '0/* csr.sepc_q */;
+        rvfi_instr_o[i].pc_wdata <= csr.sepcc_q[63:0];
       end else begin
         rvfi_instr_o[i].pc_wdata <= (exception) ? {csr.mtcc_q[63:2], 2'b00} : (commit_instr_fu[i] == CTRL_FLOW) ? commit_instr_next_pc[i] : commit_instr_pc[i] + 4;
       end
-      rvfi_instr_o[i].mem_addr <= mem_q[commit_pointer[i]].lsu_addr + ((commit_instr_op[i] == ariane_pkg::CLOAD_TAGS) ? 48 : 0);
+      rvfi_instr_o[i].mem_addr <= mem_q[commit_pointer[i]].lsu_addr + ((commit_instr_op[i] == ariane_pkg::CLOAD_TAGS) ? 0 : 0);
       // So far, only write paddr is reported. TODO: read paddr
       rvfi_instr_o[i].mem_paddr <= mem_paddr;
-      rvfi_instr_o[i].mem_wmask <= /* (mem_q[commit_pointer[i]].lsu_wmask == 16'hFFFF) ? '0 : */ mem_q[commit_pointer[i]].lsu_wmask >> mem_q[commit_pointer[i]].lsu_addr[3:0];
-      rvfi_instr_o[i].mem_wdata <= mem_q[commit_pointer[i]].lsu_wdata;
+      rvfi_instr_o[i].mem_wmask <= /* (mem_q[commit_pointer[i]].lsu_wmask == 16'hFFFF) ? '0 : */ (((mem_q[commit_pointer[i]].instr & 32'hF800703F) == 32'h1800402F) && wdata[i] == 1) ? '0 : mem_q[commit_pointer[i]].lsu_wmask >> mem_q[commit_pointer[i]].lsu_addr[3:0];
+      rvfi_instr_o[i].mem_wdata <= (((mem_q[commit_pointer[i]].instr & 32'hF800703F) == 32'h1800402F) && wdata[i] == 1) ? '0 : mem_q[commit_pointer[i]].lsu_wdata;
       rvfi_instr_o[i].mem_rmask <= /* (mem_q[commit_pointer[i]].lsu_wmask == 16'hFFFF) ? '0 :  */mem_q[commit_pointer[i]].lsu_rmask >> mem_q[commit_pointer[i]].lsu_addr[3:0];
       rvfi_instr_o[i].mem_rdata <= commit_instr_result[i];
       rvfi_instr_o[i].rs1_rdata <= mem_q[commit_pointer[i]].rs1_rdata;

@@ -392,7 +392,10 @@ if (CVA6Cfg.CheriPresent) begin
             unique case (conv_csr_addr.address)
                 riscv::CSR_MEPC: begin
                   wr_cap = mepcc_q;
-                  wr_cap_addr = {csr_wdata[riscv::XLEN-1:1], 1'b0};
+                  wr_cap_addr  = {csr_wdata[riscv::XLEN-1:1], 1'b0};
+                  // TODO-ninolomata(cheri): fix this
+                  if (CVA6Cfg.RVFI_DII)
+                    wr_cap_addr  = {csr_wdata[riscv::XLEN-1:2], 2'b0};
                 end
                 riscv::CSR_MTVEC: begin
                   wr_cap = mtcc_q;
@@ -409,7 +412,9 @@ if (CVA6Cfg.CheriPresent) begin
                 end
                 riscv::CSR_SEPC: begin
                   wr_cap = sepcc_q;
-                  wr_cap_addr  = {csr_wdata[riscv::XLEN-1:1], 1'b0};
+                  // TODO-ninolomata(cheri): fix this
+                  if (CVA6Cfg.RVFI_DII)
+                    wr_cap_addr  = {csr_wdata[riscv::XLEN-1:2], 2'b0};
                 end
                 riscv::CSR_STVEC: begin
                   wr_cap = stcc_q;
@@ -3083,6 +3088,9 @@ end
   assign rvfi_csr_o.mtcc_q = mtcc_q;
   assign rvfi_csr_o.mtdc_q = mtdc_q;
   assign rvfi_csr_o.mepcc_q = mepcc_q;
+  assign rvfi_csr_o.stcc_q = stcc_q;
+  assign rvfi_csr_o.stdc_q = stdc_q;
+  assign rvfi_csr_o.sepcc_q = sepcc_q;
   assign rvfi_csr_o.ddc_q = ddc_q;
 
 

@@ -97,6 +97,8 @@ module decoder
   logic virtual_illegal_instr;
   // this instruction is an environment call (ecall), it is handled like an exception
   logic ecall;
+  // this instruction is an return from exception or interrupt
+  logic ret;
   // this instruction is a software break-point
   logic ebreak;
   // this instruction needs floating-point rounding-mode verification
@@ -197,6 +199,7 @@ module decoder
     end
     tinst                                  = '0;
     ecall                                  = 1'b0;
+    ret                                    = 1'b0;
     ebreak                                 = 1'b0;
     check_fprm                             = 1'b0;
 
@@ -227,6 +230,7 @@ module decoder
                 // SRET
                 12'b1_0000_0010: begin
                   if (CVA6Cfg.RVS) begin
+                    ret = 1'b1;
                     instruction_o.op = ariane_pkg::SRET;
                     // check privilege level, SRET can only be executed in S and M mode
                     // we'll just decode an illegal instruction if we are in the wrong privilege level
@@ -256,6 +260,7 @@ module decoder
                 end
                 // MRET
                 12'b11_0000_0010: begin
+                  ret = 1'b1;
                   instruction_o.op = ariane_pkg::MRET;
                   // check privilege level, MRET can only be executed in M mode
                   // otherwise we decode an illegal instruction
@@ -1368,6 +1373,11 @@ module decoder
           instruction_o.rs1[4:0] = instr.atype.rs1;
           instruction_o.rs2[4:0] = instr.atype.rs2;
           instruction_o.rd[4:0] = instr.atype.rd;
+          if (CVA6Cfg.CheriPresent) begin
+            instruction_o.use_ddc = cap_mode ? 1'b0 : 1'b1;
+          end else begin
+            instruction_o.use_ddc = 1'b0;
+          end
           // TODO(zarubaf): Ordering
           // words
           if (CVA6Cfg.RVA && instr.stype.funct3 == 3'h2) begin
@@ -1407,7 +1417,7 @@ module decoder
               5'h1C: instruction_o.op = ariane_pkg::AMO_MAXDU;
               default: illegal_instr = 1'b1;
             endcase
-          end else if (CVA6Cfg.CheriPresent && CVA6Cfg.RVA && instr.stype.funct3 == 3'h4 && cap_mode) begin
+          end else if (CVA6Cfg.CheriPresent && CVA6Cfg.RVA && instr.stype.funct3 == 3'h4) begin
             unique case (instr.instr[31:27])
               5'h1: instruction_o.op = ariane_pkg::AMO_SWAPC;
               5'h2: instruction_o.op = ariane_pkg::AMO_LRC;
@@ -1498,15 +1508,12 @@ module decoder
         // --------------------------------
                 // CHERI Instructions
                 // --------------------------------
-                /**
-                 * TODO cheri: Only decoding instructions for now
-                 */
                 riscv::OpcodeCheri: begin
                   if (CVA6Cfg.CheriPresent) begin
                     instruction_o.fu  = CLU;
                     instruction_o.rs1[4:0]  = instr.rtype.rs1;
                     instruction_o.rs2[4:0]  = instr.rtype.rs2;
-                    instruction_o.rd  = instr.rtype.rd;
+                    instruction_o.rd[4:0]  = instr.rtype.rd;
                     case(instr.rtype.funct3)
                         3'b000: begin
                             case(instr.rtype.funct7)
@@ -1615,7 +1622,7 @@ module decoder
                                             instruction_o.rs1[4:0]  = instr.rtype.rs1;
                                             instruction_o.rs2[4:0]  = instr.rtype.rs2;
                                             imm_select              = NOIMM;
-                                            instruction_o.rd[4:0]   = instr.rtype.rd;
+                                            instruction_o.rd[4:0]   = 31;
                                             is_control_flow_instr_o = 1'b1;
                                         end
                                         // ------------------------------------
@@ -1632,24 +1639,42 @@ module decoder
                                     instruction_o.fu  = LOAD;
                                     // Immediate field not use
                                     imm_select = NOIMM;
-                                    instruction_o.rs1[4:0] = instr.itype.rs1;
-                                    instruction_o.rd[4:0]  = instr.itype.rd;
+                                    instruction_o.rs1[4:0] = instr.rtype.rs1;
+                                    instruction_o.rd[4:0]  = instr.rtype.rd;
                                     // if instr[23] == 0, this is a DDC relative load
                                     instruction_o.use_ddc  = instr.instr[23] ? 1'b0 : 1'b1;
                                     // determine load size and signed type
-                                    unique case (instr.rtype.rs2)
-                                        5'b00000: instruction_o.op  = ariane_pkg::LB;
-                                        5'b00001: instruction_o.op  = ariane_pkg::LH;
-                                        5'b00010: instruction_o.op  = ariane_pkg::LW;
-                                        5'b00011: instruction_o.op  = ariane_pkg::LD;
-                                        5'b00100: instruction_o.op  = ariane_pkg::LBU;
-                                        5'b00101: instruction_o.op  = ariane_pkg::LHU;
-                                        5'b00110: instruction_o.op  = ariane_pkg::LWU;
-                                        5'b10111: instruction_o.op  = ariane_pkg::LC;
-                                        default: illegal_instr = 1'b1;
+                                    unique case ({instr.instr[24],instr.instr[22:20]})
+                                        4'b0000: instruction_o.op  = ariane_pkg::LB;
+                                        4'b0001: instruction_o.op  = ariane_pkg::LH;
+                                        4'b0010: instruction_o.op  = ariane_pkg::LW;
+                                        4'b0011: instruction_o.op  = ariane_pkg::LD;
+                                        4'b0100: instruction_o.op  = ariane_pkg::LBU;
+                                        4'b0101: instruction_o.op  = ariane_pkg::LHU;
+                                        4'b0110: instruction_o.op  = ariane_pkg::LWU;
+                                        4'b1111: instruction_o.op  = ariane_pkg::LC;
+                                        default:
+                                        if (CVA6Cfg.RVA) begin
+                                          if(instr.instr[24]) begin
+                                            instruction_o.fu  = STORE;
+                                            // Immediate field not use
+                                            imm_select = NOIMM;
+                                            instruction_o.rs1[4:0] = instr.atype.rs1;
+                                            instruction_o.rs2[4:0] = '0;
+                                            instruction_o.rd[4:0] = instr.atype.rd;
+                                          end
+                                          unique case (instr.instr[22:20])
+                                            3'b010: instruction_o.op  = ariane_pkg::AMO_LRW;
+                                            3'b011: instruction_o.op  = ariane_pkg::AMO_LRD;
+                                            3'b100: instruction_o.op  = ariane_pkg::AMO_LRC;
+                                            default:
+                                              illegal_instr = 1'b1;
+                                          endcase
+                                        end else begin
+                                          illegal_instr = 1'b1;
+                                        end
                                     endcase
                                     // illegal for Test Rig
-                                    illegal_instr = (CVA6Cfg.RVFI_DII && instruction_o.op != ariane_pkg::LC) ? 1'b1 : 1'b0;
                                 end
                                 // ------------------------------------
                                 // Store CHERI Instructions
@@ -1658,22 +1683,33 @@ module decoder
                                     instruction_o.fu  = STORE;
                                     // Immediate field not use
                                     imm_select = NOIMM;
-                                    instruction_o.rs1[4:0]  = instr.stype.rs1;
-                                    instruction_o.rs2[4:0]  = instr.stype.rs2;
-                                    instruction_o.rd[4:0]   = '0;
+                                    instruction_o.rs1[4:0] = instr.atype.rs1;
+                                    instruction_o.rs2[4:0] = instr.atype.rs2;
+                                    instruction_o.rd[4:0] = 0;
                                     // if instr[23] == 0, this is a DDC relative load
                                     instruction_o.use_ddc  = instr.instr[10] ? 1'b0 : 1'b1;
                                     // determine store size
-                                    unique case (instr.rtype.rd)
-                                        5'b00000: instruction_o.op  = ariane_pkg::SB;
-                                        5'b00001: instruction_o.op  = ariane_pkg::SH;
-                                        5'b00010: instruction_o.op  = ariane_pkg::SW;
-                                        5'b00011: instruction_o.op  = ariane_pkg::SD;
-                                        5'b00100: instruction_o.op  = ariane_pkg::SC;
-                                        default: illegal_instr = 1'b1;
+                                    unique case ({instr.instr[11],instr.instr[9:7]})
+                                        4'b0000: instruction_o.op  = ariane_pkg::SB;
+                                        4'b0001: instruction_o.op  = ariane_pkg::SH;
+                                        4'b0010: instruction_o.op  = ariane_pkg::SW;
+                                        4'b0011: instruction_o.op  = ariane_pkg::SD;
+                                        4'b0100: instruction_o.op  = ariane_pkg::SC;
+                                        default:
+                                        if (CVA6Cfg.RVA) begin
+                                          instruction_o.rd[4:0] = instr.atype.rs2;
+                                          unique case (instr.instr[9:7])
+                                            3'b010: instruction_o.op  = ariane_pkg::AMO_SCW;
+                                            3'b011: instruction_o.op  = ariane_pkg::AMO_SCD;
+                                            3'b100: instruction_o.op  = ariane_pkg::AMO_SCC;
+                                            default:
+                                              illegal_instr = 1'b1;
+                                          endcase
+                                        end else begin
+                                          illegal_instr = 1'b1;
+                                        end
                                     endcase
                                     // illegal for Test Rig
-                                    illegal_instr = (CVA6Cfg.RVFI_DII && instruction_o.op  != ariane_pkg::SC) ? 1'b1 : 1'b0;
                                 end
                                 // ------------------------------------
                                 // Capability-Modification Instructions
@@ -1850,9 +1886,11 @@ module decoder
   assign instruction_o.valid = instruction_o.ex.valid;
 
   always_comb begin : exception_handling
+    automatic cva6_cheri_pkg::cap_tval_t cheri_tval;
     interrupt_cause = '0;
     instruction_o.ex = ex_i;
     orig_instr_o = '0;
+    cheri_tval = '0;
     // look if we didn't already get an exception in any previous
     // stage - we should not overwrite it as we retain order regarding the exception
     if (~ex_i.valid) begin
@@ -1891,6 +1929,14 @@ module decoder
           instruction_o.ex.cause = riscv::ENV_CALL_UMODE;
         end else if (priv_lvl_i == riscv::PRIV_LVL_M) begin
           instruction_o.ex.cause = riscv::ENV_CALL_MMODE;
+        end
+      end else if (ret) begin
+        if (CVA6Cfg.CheriPresent && !pcc.hperms.access_sys_regs) begin
+          instruction_o.ex.valid = 1'b1;
+          instruction_o.ex.cause = cva6_cheri_pkg::CAP_EXCEPTION;
+          cheri_tval.cause       = cva6_cheri_pkg::CAP_PERM_ACCESS_SYS_REGS;
+          cheri_tval.cap_idx     = {6'b100000};
+          instruction_o.ex.tval  = cheri_tval;
         end
       end else if (ebreak) begin
         // this exception is valid

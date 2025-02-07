@@ -161,6 +161,7 @@ module cva6
       fu_op                             operation;
       logic [CVA6Cfg.TRANS_ID_BITS-1:0] trans_id;
       logic [REG_ADDR_SIZE-1:0]         rs1;
+      logic                             use_ddc;
     },
 
     localparam type fu_data_t = struct packed {
@@ -172,6 +173,7 @@ module cva6
       logic [REG_ADDR_SIZE-1:0]         rs1;
       logic [REG_ADDR_SIZE-1:0]         rs2;
       logic [CVA6Cfg.TRANS_ID_BITS-1:0] trans_id;
+      logic                             use_ddc;
     },
 
     localparam type icache_req_t = struct packed {

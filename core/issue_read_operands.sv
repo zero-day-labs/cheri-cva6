@@ -153,6 +153,7 @@ module issue_read_operands
   fu_op operator_n, operator_q;  // operation to perform
   fu_t fu_n, fu_q;  // functional unit to use
   logic [31:0] tinst_n, tinst_q;  // transformed instruction
+  logic use_ddc_n, use_ddc_q;
 
   // forwarding signals
   logic forward_rs1, forward_rs2, forward_rs3;
@@ -174,6 +175,7 @@ module issue_read_operands
   assign fu_data_o.imm = imm_q;
   assign fu_data_o.rs1 = (CVA6Cfg.CheriPresent) ? rs1_q : '0;
   assign fu_data_o.rs2 = (CVA6Cfg.CheriPresent) ? rs2_q : '0;
+  assign fu_data_o.use_ddc = (CVA6Cfg.CheriPresent) ? use_ddc_q : '0;
   assign alu_valid_o = alu_valid_q;
   assign branch_valid_o = branch_valid_q;
   assign lsu_valid_o = lsu_valid_q;
@@ -303,9 +305,11 @@ module issue_read_operands
     trans_id_n = issue_instr_i.trans_id;
     fu_n       = issue_instr_i.fu;
     operator_n = issue_instr_i.op;
+
     if (CVA6Cfg.CheriPresent) begin
       rs1_n = issue_instr_i.rs1;
       rs2_n = issue_instr_i.rs2;
+      use_ddc_n  = issue_instr_i.use_ddc;
     end
     if (CVA6Cfg.RVH) begin
       tinst_n = issue_instr_i.ex.tinst;
@@ -646,6 +650,7 @@ module issue_read_operands
       if (CVA6Cfg.CheriPresent) begin
         rs1_q <= '0;
         rs2_q <= '0;
+        use_ddc_q <= '0;
       end
       pc_o                  <= '0;
       is_compressed_instr_o <= 1'b0;
@@ -663,6 +668,7 @@ module issue_read_operands
       if (CVA6Cfg.CheriPresent) begin
         rs1_q <= rs1_n;
         rs2_q <= rs2_n;
+        use_ddc_q <= use_ddc_n;
       end
       pc_o                  <= issue_instr_i.pc;
       is_compressed_instr_o <= issue_instr_i.is_compressed;
