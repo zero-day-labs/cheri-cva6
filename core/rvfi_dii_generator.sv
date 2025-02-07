@@ -1,10 +1,19 @@
 
-// Copyright 2023 Bruno Sá and ZeroDay Labs.
-// Solderpad Hardware License, Version 0.51, see LICENSE for details.
-// SPDX-License-Identifier: SHL-0.51
+// Copyright 2025 Bruno Sá and Zero-Day Labs.
+// Copyright and related rights are licensed under the Solderpad Hardware
+// License, Version 0.51 (the "License"); you may not use this file except in
+// compliance with the License.  You may obtain a copy of the License at
+// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
+// or agreed to in writing, software, hardware and materials distributed under
+// this License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
+// specific language governing permissions ansd limitations under the License.
 //
 // Author: Bruno Sá <bruno.vilaca.sa@gmail.com>
-// Date:   29.11.2023
+// Acknowledges: Technology Inovation Institute (TII)
+//
+// Date: 01.01.2025
+// Description: CVA6 RVFI DII Generator
 
 `include "common_cells/registers.svh"
 

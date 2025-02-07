@@ -10,7 +10,7 @@
  *
  * File:   cva6_cheri_pkg.sv
  * Author: Bruno Sá <bruno.vilaca.sa@gmail.com>
- * Date:   24.9.2022
+ * Date:   01.01.2025
  *
  * Description: Contains CHERI related structures and interfaces
  * Adapted from the CHERI Capability Library (https://github.com/CTSRD-CHERI/cheri-cap-lib)
