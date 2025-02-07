@@ -673,6 +673,21 @@ module cheri_unit import ariane_pkg::*; import cva6_cheri_pkg::*;#(
                 operand_b_violations[CAP_SEAL_VIOLATION] = 1'b0;
             end
 
+            if (!operand_a.hperms.permit_cinvoke) begin
+                operand_a_violations[CAP_PERM_CINVOKE] = 1'b1;
+            end
+
+            if (!operand_b.hperms.permit_cinvoke) begin
+                operand_b_violations[CAP_PERM_CINVOKE] = 1'b1;
+            end
+
+            if (!operand_a.hperms.permit_execute) begin
+                operand_a_violations[CAP_PERM_EXEC_VIOLATION] = 1'b1;
+            end
+
+            if (operand_b.hperms.permit_execute) begin
+                operand_b_violations[CAP_PERM_EXEC_VIOLATION] = 1'b1;
+            end
         end
     end
 
