@@ -160,7 +160,7 @@ src :=  $(root-dir)/core/include/$(target)_config_pkg.sv                        
         $(root-dir)/vendor/zero-day/axi_tagcontroller/src/axi_llc/src/axi_llc_reg_top.sv                         \
         $(root-dir)/vendor/zero-day/axi_tagcontroller/src/axi_llc/src/axi_llc_write_unit.sv                      \
         $(root-dir)/vendor/zero-day/axi_tagcontroller/src/axi_llc/src/eviction_refill/axi_llc_ax_master.sv       \
-        $(root-dir)/vendor/zero-day/axi_tagcontroller/src/axi_llc/src/eviction_refill/axi_llc_r_master.sv        \
+        $(root-dir)/vendor/zero-day/axi_tagcontroller/src/eviction_refill/axi_llc_r_master.sv        \
         $(root-dir)/vendor/zero-day/axi_tagcontroller/src/axi_llc/src/eviction_refill/axi_llc_w_master.sv        \
         $(root-dir)/vendor/zero-day/axi_tagcontroller/src/axi_llc/src/hit_miss_detect/axi_llc_evict_box.sv       \
         $(root-dir)/vendor/zero-day/axi_tagcontroller/src/axi_llc/src/hit_miss_detect/axi_llc_lock_box_bloom.sv  \
