@@ -171,6 +171,9 @@ module branch_unit #(
         if (branch_predict_i.cf != ariane_pkg::Return)
           resolved_branch_o.cf_type = ariane_pkg::JumpR;
       end
+      if (fu_data_i.operation inside {ariane_pkg::CINVOKE} && (branch_predict_i.cf == ariane_pkg::NoCF)) begin
+          resolved_branch_o.is_mispredict = 1'b1;
+      end
       // to resolve the branch in ID
       resolve_branch_o = 1'b1;
     end
@@ -197,7 +200,7 @@ module branch_unit #(
     target_pcc_base       = target_pcc.base;
     target_pcc_top        = target_pcc.top;
     target_pcc_address    = target_pcc.addr;
-    target_pcc_is_sealed  = (target_pcc.otype != cva6_cheri_pkg::UNSEALED_CAP);
+    target_pcc_is_sealed  = (operand_a.otype != cva6_cheri_pkg::UNSEALED_CAP);
     // Only throw instruction address misaligned exception if this is indeed a `taken` conditional branch or
     // an unconditional jump
     if (branch_valid_i && (target_address[0] || ((!CVA6Cfg.RVC || CVA6Cfg.RVFI_DII) && target_address[1])) && jump_taken) begin
@@ -220,14 +223,14 @@ module branch_unit #(
                branch_exception_o.valid = 1'b1;
             end
             if ((fu_data_i.operation inside {ariane_pkg::CJALR})) begin
-                if (!target_pcc.hperms.permit_execute) begin
+                if (!operand_a.hperms.permit_execute) begin
                     branch_exception_o.cause = cva6_cheri_pkg::CAP_EXCEPTION;
                     cheri_tval.cause         = cva6_cheri_pkg::CAP_PERM_EXEC_VIOLATION;
                     cheri_tval.cap_idx       = fu_data_i.rs1;
                     branch_exception_o.valid = 1'b1;
                 end
 
-                if (target_pcc_is_sealed && (($signed(target_pcc.otype) != cva6_cheri_pkg::SENTRY_CAP) || (|fu_data_i.imm[CVA6Cfg.VLEN-1:0]))) begin
+                if ((operand_a.otype != cva6_cheri_pkg::UNSEALED_CAP) && (($signed(operand_a.otype) != cva6_cheri_pkg::SENTRY_CAP) || (|fu_data_i.imm[CVA6Cfg.VLEN-1:0]))) begin
                     branch_exception_o.cause = cva6_cheri_pkg::CAP_EXCEPTION;
                     cheri_tval.cause         = cva6_cheri_pkg::CAP_SEAL_VIOLATION;
                     cheri_tval.cap_idx       = fu_data_i.rs1;
