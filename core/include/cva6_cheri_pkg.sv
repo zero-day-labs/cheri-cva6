@@ -681,7 +681,7 @@ package cva6_cheri_pkg;
         addrw_t deltaAddrHi = $signed({1'b0,newAddrHi} - {1'b0,cap_meta_data.addr_hi_r}) << (cap.bounds.exp + CAP_M_WIDTH);
         // Calculate the actual difference between the upper bits of the new address and the original address.
         addrw_t mask = -1 << (exp + CAP_M_WIDTH);
-        addrw_t deltaAddrUpper = (address - cap.addr) & mask;
+        addrw_t deltaAddrUpper = (address & mask) - (cap.addr & mask);
         logic is_rep = deltaAddrHi == deltaAddrUpper;
         ret.addr = address;
         ret.addr_mid = address >> exp;
