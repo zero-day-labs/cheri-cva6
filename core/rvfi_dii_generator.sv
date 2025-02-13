@@ -58,7 +58,7 @@ module rvfi_dii_generator
                 dreq_o.valid = 1'b1;
             end
             // check for errors
-            if (dreq_i.kill_s1 || dreq_i.kill_s2) begin
+            if ((dreq_i.kill_s1 || dreq_i.kill_s2) && !ex_q.valid) begin
                 busy_d = 1'b0;
                 rvfi_dii_data_ready_o = 1'b0;
                 dreq_o.valid = 1'b0;
