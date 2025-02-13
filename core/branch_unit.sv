@@ -128,7 +128,7 @@ module branch_unit #(
         end
     end
     if (fu_data_i.operation inside {ariane_pkg::CINVOKE}) begin
-        next_pc_tmp = fu_data_i.operand_b;
+        next_pc_tmp = cva6_cheri_pkg::cap_reg_to_cap_pcc(fu_data_i.operand_b);
         next_pc_tmp.otype  =  cva6_cheri_pkg::UNSEALED_CAP;
     end else begin
         if (!cap_mode) begin
