@@ -443,8 +443,12 @@ if (CVA6Cfg.CheriPresent) begin : gen_cheri_pcc_checks
 always_comb begin : cheri_pcc_checks
         automatic cva6_cheri_pkg::cap_tval_t cheri_tval;
         automatic cva6_cheri_pkg::cap_pcc_t npcc;
+        automatic cva6_cheri_pkg::addrw_t min_instr_off;
 
         npcc = cva6_cheri_pkg::cap_pcc_t'(npc_q);
+
+        // TODO-cheri(ninolomata): fix this once we disable compressed instructions without trigering errors
+        min_instr_off = ((CVA6Cfg.RVC && !CVA6Cfg.RVFI_DII) ? {{CVA6Cfg.XLEN-2{1'b0}}, 2'h2} : {{CVA6Cfg.XLEN-3{1'b0}}, 3'h4});
 
         cheri_tval     = {CVA6Cfg.XLEN{1'b0}};
         cheri_ex.cause = cva6_cheri_pkg::CAP_EXCEPTION;
@@ -459,7 +463,7 @@ always_comb begin : cheri_pcc_checks
             cheri_ex.valid     = 1'b1;
         end
 
-        if(fetch_address < npcc.base || ($unsigned(fetch_address) + {{CVA6Cfg.VLEN-2{1'b0}}, 2'h2}) > npcc.top) begin
+        if(fetch_address < npcc.base || ($unsigned(fetch_address) + min_instr_off) > npcc.top) begin
             cheri_tval.cause   = cva6_cheri_pkg::CAP_LENGTH_VIOLATION;
             cheri_ex.valid     = 1'b1;
         end
