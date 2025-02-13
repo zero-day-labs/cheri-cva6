@@ -124,7 +124,7 @@ package riscv;
   typedef struct packed {
     logic         stce;   // not implemented - requires Sctc extension
     logic         pbmte;  // not implemented - requires Svpbmt extension
-    logic [61:28] wpri1;  // writes preserved reads ignored
+    logic [61:28] wpri2;  // writes preserved reads ignored
     logic         cheri;  // CHERI extension
     logic [27:8]  wpri1;  // writes preserved reads ignored
     logic         cbze;   // not implemented - requires Zicboz extension
