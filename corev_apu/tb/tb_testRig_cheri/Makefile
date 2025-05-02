@@ -16,25 +16,24 @@
 # specific language governing permissions and limitations
 # under the License.
 
+# root path
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+root-dir := $(abspath $(dir $(mkfile_path))../../..)/
+
 # questa library
 library        ?= work
 # verilator lib
 ver-library    ?= work-ver
-# library for DPI
-dpi-library    ?= work-dpi
 # Top level module to compile
 top_level      ?= ariane_tb
 # Maximum amount of cycles for a successful simulation run
 max_cycles     ?= 10000000
 # verilator version
-verilator      ?= /media/ninolomata/Nino1/CHERI/TestRIG/riscv-implementations/cva6/tools/verilator/bin/verilator
+verilator      ?= $(root-dir)/tools/verilator-v5.015/bin/verilator
 # traget option
 target-options ?=
 # additional definess
 defines        ?= WT_DCACHE
-# root path
-mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
-root-dir := $(abspath $(dir $(mkfile_path))../../..)/
 
 ifndef CVA6_REPO_DIR
 $(warning must set CVA6_REPO_DIR to point at the root of CVA6 sources -- doing it for you...)
@@ -49,8 +48,6 @@ verilator_threads := 1
 ifndef RISCV
 $(error RISCV not set - please point your RISCV variable to your RISCV installation)
 endif
-
-SPIKE_INSTALL_DIR     ?= $(root-dir)/tools/spike
 
 target     ?= cv64a6_imafdch_sv39_rvfi_dii
 ifeq ($(target), cv64a6_imafdch_sv39_rvfi_dii)
@@ -95,28 +92,14 @@ util := $(addprefix $(root-dir), $(util))
 test_pkg := $(wildcard tb/test/*/*sequence_pkg.sv*) \
 			$(wildcard tb/test/*/*_pkg.sv*)
 
-# DPI
- dpi := $(patsubst $(root-dir)/corev_apu/tb/dpi/%.cc, ${dpi-library}/%.o, $(wildcard $(root-dir)/corev_apu/tb/dpi/*.cc))
-
-dpi_hdr := $(wildcard $(root-dir)/corev_apu/tb/dpi/*.h)
-#  dpi_hdr := $(addprefix $(root-dir), $(dpi_hdr))
-
 CFLAGS := -I$(QUESTASIM_HOME)/include                                       \
           -I$(VCS_HOME)/include                                             \
           -I$(RISCV)/include                                                \
-          -I$(SPIKE_ROOT)/include                                           \
-		  -I$(root-dir)/corev_apu/tb/tb_testRig_cheri/src/inc               \
           -I$(root-dir)/corev_apu/tb/tb_testRig_cheri/src/SocketPacketUtils \
-          -std=c++11 -I$(root-dir)/corev_apu/tb/dpi -O3
+          -I$(root-dir)/corev_apu/tb/dpi -O3
 
 # this list contains the standalone components
 src :=  $(root-dir)/core/include/$(target)_config_pkg.sv                                                         \
-        $(if $(spike-tandem),$(root-dir)/verif/tb/core/uvma_core_cntrl_pkg.sv)                                   \
-        $(if $(spike-tandem),$(root-dir)/verif/tb/core/uvma_cva6pkg_utils_pkg.sv)                                \
-        $(if $(spike-tandem),$(root-dir)/verif/tb/core/uvma_rvfi_pkg.sv)                                         \
-        $(if $(spike-tandem),$(root-dir)/verif/tb/core/uvmc_rvfi_reference_model_pkg.sv)                         \
-        $(if $(spike-tandem),$(root-dir)/verif/tb/core/uvmc_rvfi_scoreboard_pkg.sv)                              \
-        $(if $(spike-tandem),$(root-dir)/corev_apu/tb/common/spike.sv)                                           \
         $(root-dir)/corev_apu/src/ariane.sv                                                                      \
         $(wildcard $(root-dir)/corev_apu/bootrom/*.sv)                                                           \
         $(wildcard $(root-dir)/corev_apu/clint/*.sv)                                                             \
@@ -130,8 +113,6 @@ src :=  $(root-dir)/core/include/$(target)_config_pkg.sv                        
         $(root-dir)/corev_apu/rv_plic/rtl/plic_regmap.sv                                                         \
         $(root-dir)/corev_apu/rv_plic/rtl/plic_top.sv                                                            \
         $(root-dir)/corev_apu/riscv-dbg/src/dmi_cdc.sv                                                           \
-        $(root-dir)/corev_apu/riscv-dbg/src/dmi_jtag.sv                                                          \
-        $(root-dir)/corev_apu/riscv-dbg/src/dmi_jtag_tap.sv                                                      \
         $(root-dir)/corev_apu/riscv-dbg/src/dm_csrs.sv                                                           \
         $(root-dir)/corev_apu/riscv-dbg/src/dm_mem.sv                                                            \
         $(root-dir)/corev_apu/riscv-dbg/src/dm_sba.sv                                                            \
@@ -199,13 +180,10 @@ src :=  $(root-dir)/core/include/$(target)_config_pkg.sv                        
   		$(root-dir)/vendor/zero-day/axi_tagcontroller/src/axi_tagctrl_top.sv                                     \
   		$(root-dir)/vendor/zero-day/axi_tagcontroller/src/axi_tagctrl_reg_wrap.sv                                \
         $(root-dir)/corev_apu/tb/ariane_testharness.sv                                                           \
-        $(root-dir)/corev_apu/tb/tb_testRig_cheri/hdl/ariane_testharness_dii.sv                                  \
 		$(root-dir)/corev_apu/tb/cva6_cheri_tag_mem.sv                                                           \
         $(root-dir)/corev_apu/tb/ariane_peripherals.sv                                                           \
         $(root-dir)/corev_apu/tb/rvfi_tracer.sv                                                                  \
         $(root-dir)/corev_apu/tb/common/uart.sv                                                                  \
-        $(root-dir)/corev_apu/tb/common/SimDTM.sv                                                                \
-        $(root-dir)/corev_apu/tb/common/SimJTAG.sv                                                               \
         $(root-dir)/corev_apu/tb/tb_testRig_cheri/hdl/ariane_testharness_dii.sv
 
 copro_src := core/cvxif_example/include/cvxif_instr_pkg.sv \
@@ -260,14 +238,13 @@ verilate_command := $(verilator) --no-timing $(root-dir)/verilator_config.vlt   
                     -Wno-BLKANDNBLK                                                                              \
                     -Wno-style                                                                                   \
                     $(if $(DEBUG), --trace --trace-structs )                                                     \
-                    -LDFLAGS "-L$(RISCV)/lib -L$(SPIKE_INSTALL_DIR)/lib -Wl,-rpath,$(RISCV)/lib -Wl,-rpath,$(SPIKE_INSTALL_DIR)/lib -lfesvr$(if $(PROFILE), -g -pg,) $(if $(DROMAJO), -L../corev_apu/tb/dromajo/src -ldromajo_cosim,) -lpthread" \
+                    -LDFLAGS "-L$(RISCV)/lib -Wl,-rpath,$(RISCV)/lib$(if $(PROFILE), -g -pg,) $(if $(DROMAJO), -L../corev_apu/tb/dromajo/src -ldromajo_cosim,) -lpthread" \
                     -CFLAGS "$(CFLAGS)$(if $(PROFILE), -g -pg,) $(if $(DROMAJO), -DDROMAJO=1,) -DVL_DEBUG"       \
                     -Wall --cc  --vpi                                                                            \
                     $(list_incdir) --top-module ariane_testharness_dii                                           \
 					--threads-dpi none 																			 \
                     --Mdir $(ver-library) -O3                                                                    \
-                    --exe ${root-dir}/corev_apu/tb/tb_testRig_cheri/src/cva6_dii_toplevel.cpp ${root-dir}/corev_apu/tb/tb_testRig_cheri/src/SocketPacketUtils/socket_packet_utils.c ${root-dir}/corev_apu/tb/dpi/SimDTM.cc ${root-dir}/corev_apu/tb/dpi/SimJTAG.cc      \
-                    ${root-dir}/corev_apu/tb/dpi/remote_bitbang.cc ${root-dir}/corev_apu/tb/dpi/msim_helper.cc
+                    --exe ${root-dir}/corev_apu/tb/tb_testRig_cheri/src/cva6_dii_toplevel.cpp ${root-dir}/corev_apu/tb/tb_testRig_cheri/src/SocketPacketUtils/socket_packet_utils.c
 
 # User Verilator, at some point in the future this will be auto-generated
 verilate:
@@ -278,7 +255,7 @@ verilate:
 
 clean:
 	rm -rf $(riscv-torture-dir)/output/test*
-	rm -rf $(library)/ $(dpi-library)/ $(ver-library)/
+	rm -rf $(library)/ $(ver-library)/
 	rm -f tmp/*.ucdb tmp/*.log *.wlf *vstf wlft* *.ucdb
 
 .PHONY:
