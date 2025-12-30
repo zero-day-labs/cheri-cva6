@@ -18,6 +18,7 @@ module ariane_peripherals #(
     parameter int AxiIdWidth   = -1,
     parameter int AxiUserWidth = 1,
     parameter bit InclUART     = 1,
+    parameter bit InclUART2    = 1,
     parameter bit InclSPI      = 0,
     parameter bit InclEthernet = 0,
     parameter bit InclGPIO     = 0,
@@ -27,6 +28,7 @@ module ariane_peripherals #(
     input  logic       rst_ni          , // Asynchronous reset active low
     AXI_BUS.Slave      plic            ,
     AXI_BUS.Slave      uart            ,
+    AXI_BUS.Slave      uart2           ,
     AXI_BUS.Slave      spi             ,
     AXI_BUS.Slave      ethernet        ,
     AXI_BUS.Slave      timer           ,
@@ -34,6 +36,9 @@ module ariane_peripherals #(
     // UART
     input  logic       rx_i            ,
     output logic       tx_o            ,
+    // UART 2
+    input  logic       rx2_i           ,
+    output logic       tx2_o           ,
     // Ethernet
     input  wire        eth_txck        ,
     input  wire        eth_rxck        ,
@@ -60,7 +65,7 @@ module ariane_peripherals #(
     logic [ariane_soc::NumSources-1:0] irq_sources;
 
     // Unused interrupt sources
-    assign irq_sources[ariane_soc::NumSources-1:7] = '0;
+    assign irq_sources[ariane_soc::NumSources-1:8] = '0;
 
     REG_BUS #(
         .ADDR_WIDTH ( 32 ),
@@ -297,6 +302,133 @@ module ariane_peripherals #(
             .prdata_o  ( uart_prdata  ),
             .pready_o  ( uart_pready  ),
             .pslverr_o ( uart_pslverr )
+        );
+        /* pragma translate_on */
+    end
+    // ---------------
+    // 3. UART3
+    // ---------------
+    logic         uart2_penable;
+    logic         uart2_pwrite;
+    logic [31:0]  uart2_paddr;
+    logic         uart2_psel;
+    logic [31:0]  uart2_pwdata;
+    logic [31:0]  uart2_prdata;
+    logic         uart2_pready;
+    logic         uart2_pslverr;
+    logic         uart2_penable;
+    logic         uart2_pwrite;
+    logic [31:0]  uart2_paddr;
+    logic         uart2_psel;
+    logic [31:0]  uart2_pwdata;
+    logic [31:0]  uart2_prdata;
+    logic         uart2_pready;
+    logic         uart2_pslverr;
+
+    axi2apb_64_32 #(
+        .AXI4_ADDRESS_WIDTH ( AxiAddrWidth ),
+        .AXI4_RDATA_WIDTH   ( AxiDataWidth ),
+        .AXI4_WDATA_WIDTH   ( AxiDataWidth ),
+        .AXI4_ID_WIDTH      ( AxiIdWidth   ),
+        .AXI4_USER_WIDTH    ( AxiUserWidth ),
+        .BUFF_DEPTH_SLAVE   ( 2            ),
+        .APB_ADDR_WIDTH     ( 32           )
+    ) i_axi2apb_64_32_uart (
+        .ACLK      ( clk_i          ),
+        .ARESETn   ( rst_ni         ),
+        .test_en_i ( 1'b0           ),
+        .AWID_i    ( uart2.aw_id     ),
+        .AWADDR_i  ( uart2.aw_addr   ),
+        .AWLEN_i   ( uart2.aw_len    ),
+        .AWSIZE_i  ( uart2.aw_size   ),
+        .AWBURST_i ( uart2.aw_burst  ),
+        .AWLOCK_i  ( uart2.aw_lock   ),
+        .AWCACHE_i ( uart2.aw_cache  ),
+        .AWPROT_i  ( uart2.aw_prot   ),
+        .AWREGION_i( uart2.aw_region ),
+        .AWUSER_i  ( uart2.aw_user   ),
+        .AWQOS_i   ( uart2.aw_qos    ),
+        .AWVALID_i ( uart2.aw_valid  ),
+        .AWREADY_o ( uart2.aw_ready  ),
+        .WDATA_i   ( uart2.w_data    ),
+        .WSTRB_i   ( uart2.w_strb    ),
+        .WLAST_i   ( uart2.w_last    ),
+        .WUSER_i   ( uart2.w_user    ),
+        .WVALID_i  ( uart2.w_valid   ),
+        .WREADY_o  ( uart2.w_ready   ),
+        .BID_o     ( uart2.b_id      ),
+        .BRESP_o   ( uart2.b_resp    ),
+        .BVALID_o  ( uart2.b_valid   ),
+        .BUSER_o   ( uart2.b_user    ),
+        .BREADY_i  ( uart2.b_ready   ),
+        .ARID_i    ( uart2.ar_id     ),
+        .ARADDR_i  ( uart2.ar_addr   ),
+        .ARLEN_i   ( uart2.ar_len    ),
+        .ARSIZE_i  ( uart2.ar_size   ),
+        .ARBURST_i ( uart2.ar_burst  ),
+        .ARLOCK_i  ( uart2.ar_lock   ),
+        .ARCACHE_i ( uart2.ar_cache  ),
+        .ARPROT_i  ( uart2.ar_prot   ),
+        .ARREGION_i( uart2.ar_region ),
+        .ARUSER_i  ( uart2.ar_user   ),
+        .ARQOS_i   ( uart2.ar_qos    ),
+        .ARVALID_i ( uart2.ar_valid  ),
+        .ARREADY_o ( uart2.ar_ready  ),
+        .RID_o     ( uart2.r_id      ),
+        .RDATA_o   ( uart2.r_data    ),
+        .RRESP_o   ( uart2.r_resp    ),
+        .RLAST_o   ( uart2.r_last    ),
+        .RUSER_o   ( uart2.r_user    ),
+        .RVALID_o  ( uart2.r_valid   ),
+        .RREADY_i  ( uart2.r_ready   ),
+        .PENABLE   ( uart2_penable   ),
+        .PWRITE    ( uart2_pwrite    ),
+        .PADDR     ( uart2_paddr     ),
+        .PSEL      ( uart2_psel      ),
+        .PWDATA    ( uart2_pwdata    ),
+        .PRDATA    ( uart2_prdata    ),
+        .PREADY    ( uart2_pready    ),
+        .PSLVERR   ( uart2_pslverr   )
+    );
+
+    if (InclUART2) begin : gen_uart2
+        apb_uart i_apb_uart2 (
+            .CLK     ( clk_i           ),
+            .RSTN    ( rst_ni          ),
+            .PSEL    ( uart2_psel      ),
+            .PENABLE ( uart2_penable   ),
+            .PWRITE  ( uart2_pwrite    ),
+            .PADDR   ( uart2_paddr[4:2]),
+            .PWDATA  ( uart2_pwdata    ),
+            .PRDATA  ( uart2_prdata    ),
+            .PREADY  ( uart2_pready    ),
+            .PSLVERR ( uart2_pslverr   ),
+            .INT     ( irq_sources[7]  ),
+            .OUT1N   (                 ), // keep open
+            .OUT2N   (                 ), // keep open
+            .RTSN    (                 ), // no flow control
+            .DTRN    (                 ), // no flow control
+            .CTSN    ( 1'b0            ),
+            .DSRN    ( 1'b0            ),
+            .DCDN    ( 1'b0            ),
+            .RIN     ( 1'b0            ),
+            .SIN     ( rx_i            ),
+            .SOUT    ( tx_o            )
+        );
+    end else begin
+        assign irq_sources[7] = 1'b0;
+        /* pragma translate_off */
+        mock_uart i_mock_uart2 (
+            .clk_i     ( clk_i        ),
+            .rst_ni    ( rst_ni       ),
+            .penable_i ( uart2_penable ),
+            .pwrite_i  ( uart2_pwrite  ),
+            .paddr_i   ( uart2_paddr   ),
+            .psel_i    ( uart2_psel    ),
+            .pwdata_i  ( uart2_pwdata  ),
+            .prdata_o  ( uart2_prdata  ),
+            .pready_o  ( uart2_pready  ),
+            .pslverr_o ( uart2_pslverr )
         );
         /* pragma translate_on */
     end

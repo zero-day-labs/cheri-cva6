@@ -12,6 +12,10 @@ set_property -dict { PACKAGE_PIN W29   IOSTANDARD LVCMOS33 } [get_ports { tms   
 set_property -dict {PACKAGE_PIN Y23 IOSTANDARD LVCMOS33} [get_ports tx]
 set_property -dict {PACKAGE_PIN Y20 IOSTANDARD LVCMOS33} [get_ports rx]
 
+## UART2
+set_property -dict {PACKAGE_PIN V27 IOSTANDARD LVCMOS33} [get_ports tx2]
+set_property -dict {PACKAGE_PIN Y30 IOSTANDARD LVCMOS33} [get_ports rx2]
+
 
 ## LEDs
 set_property -dict {PACKAGE_PIN T28 IOSTANDARD LVCMOS33} [get_ports {led[0]}]

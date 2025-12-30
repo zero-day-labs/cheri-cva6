@@ -19,6 +19,7 @@ module ariane_peripherals #(
     parameter int AxiIdWidth   = -1,
     parameter int AxiUserWidth = 1,
     parameter bit InclUART     = 1,
+    parameter bit InclUART2    = 1,
     parameter bit InclSPI      = 0,
     parameter bit InclEthernet = 0,
     parameter bit InclGPIO     = 0,
@@ -29,6 +30,7 @@ module ariane_peripherals #(
     input  logic       rst_ni          , // Asynchronous reset active low
     AXI_BUS.Slave      plic            ,
     AXI_BUS.Slave      uart            ,
+    AXI_BUS.Slave      uart2           ,
     AXI_BUS.Slave      spi             ,
     AXI_BUS.Slave      gpio            ,
     AXI_BUS.Slave      ethernet        ,
@@ -37,6 +39,9 @@ module ariane_peripherals #(
     // UART
     input  logic       rx_i            ,
     output logic       tx_o            ,
+    // UART 2
+    input  logic       rx2_i           ,
+    output logic       tx2_o           ,
     // Ethernet
     input  logic       eth_clk_i       ,
     input  wire        eth_rxck        ,
@@ -67,7 +72,7 @@ module ariane_peripherals #(
     logic [ariane_soc::NumSources-1:0] irq_sources;
 
     // Unused interrupt sources
-    assign irq_sources[ariane_soc::NumSources-1:7] = '0;
+    assign irq_sources[ariane_soc::NumSources-1:8] = '0;
 
     REG_BUS #(
         .ADDR_WIDTH ( 32 ),
@@ -191,14 +196,14 @@ module ariane_peripherals #(
     // ---------------
     // 2. UART
     // ---------------
-    logic         uart_penable;
-    logic         uart_pwrite;
-    logic [31:0]  uart_paddr;
-    logic         uart_psel;
-    logic [31:0]  uart_pwdata;
-    logic [31:0]  uart_prdata;
-    logic         uart_pready;
-    logic         uart_pslverr;
+    logic[1:0]         uart_penable;
+    logic[1:0]         uart_pwrite;
+    logic[1:0] [31:0]  uart_paddr;
+    logic[1:0]         uart_psel;
+    logic[1:0] [31:0]  uart_pwdata;
+    logic[1:0] [31:0]  uart_prdata;
+    logic[1:0]         uart_pready;
+    logic[1:0]         uart_pslverr;
 
     axi2apb_64_32 #(
         .AXI4_ADDRESS_WIDTH ( AxiAddrWidth ),
@@ -256,56 +261,166 @@ module ariane_peripherals #(
         .RUSER_o   ( uart.r_user    ),
         .RVALID_o  ( uart.r_valid   ),
         .RREADY_i  ( uart.r_ready   ),
-        .PENABLE   ( uart_penable   ),
-        .PWRITE    ( uart_pwrite    ),
-        .PADDR     ( uart_paddr     ),
-        .PSEL      ( uart_psel      ),
-        .PWDATA    ( uart_pwdata    ),
-        .PRDATA    ( uart_prdata    ),
-        .PREADY    ( uart_pready    ),
-        .PSLVERR   ( uart_pslverr   )
+        .PENABLE   ( uart_penable[0]),
+        .PWRITE    ( uart_pwrite[0] ),
+        .PADDR     ( uart_paddr[0]  ),
+        .PSEL      ( uart_psel[0]   ),
+        .PWDATA    ( uart_pwdata[0] ),
+        .PRDATA    ( uart_prdata[0] ),
+        .PREADY    ( uart_pready[0] ),
+        .PSLVERR   ( uart_pslverr[0])
     );
 
     if (InclUART) begin : gen_uart
         apb_uart i_apb_uart (
-            .CLK     ( clk_i           ),
-            .RSTN    ( rst_ni          ),
-            .PSEL    ( uart_psel       ),
-            .PENABLE ( uart_penable    ),
-            .PWRITE  ( uart_pwrite     ),
-            .PADDR   ( uart_paddr[4:2] ),
-            .PWDATA  ( uart_pwdata     ),
-            .PRDATA  ( uart_prdata     ),
-            .PREADY  ( uart_pready     ),
-            .PSLVERR ( uart_pslverr    ),
-            .INT     ( irq_sources[0]  ),
-            .OUT1N   (                 ), // keep open
-            .OUT2N   (                 ), // keep open
-            .RTSN    (                 ), // no flow control
-            .DTRN    (                 ), // no flow control
-            .CTSN    ( 1'b0            ),
-            .DSRN    ( 1'b0            ),
-            .DCDN    ( 1'b0            ),
-            .RIN     ( 1'b0            ),
-            .SIN     ( rx_i            ),
-            .SOUT    ( tx_o            )
+            .CLK     ( clk_i             ),
+            .RSTN    ( rst_ni            ),
+            .PSEL    ( uart_psel[0]      ),
+            .PENABLE ( uart_penable[0]   ),
+            .PWRITE  ( uart_pwrite[0]    ),
+            .PADDR   ( uart_paddr[0][4:2]),
+            .PWDATA  ( uart_pwdata[0]    ),
+            .PRDATA  ( uart_prdata[0]    ),
+            .PREADY  ( uart_pready[0]    ),
+            .PSLVERR ( uart_pslverr[0]   ),
+            .INT     ( irq_sources[0]    ),
+            .OUT1N   (                   ), // keep open
+            .OUT2N   (                   ), // keep open
+            .RTSN    (                   ), // no flow control
+            .DTRN    (                   ), // no flow control
+            .CTSN    ( 1'b0              ),
+            .DSRN    ( 1'b0              ),
+            .DCDN    ( 1'b0              ),
+            .RIN     ( 1'b0              ),
+            .SIN     ( rx_i              ),
+            .SOUT    ( tx_o              )
         );
     end else begin
         /* pragma translate_off */
         `ifndef VERILATOR
         mock_uart i_mock_uart (
-            .clk_i     ( clk_i        ),
-            .rst_ni    ( rst_ni       ),
-            .penable_i ( uart_penable ),
-            .pwrite_i  ( uart_pwrite  ),
-            .paddr_i   ( uart_paddr   ),
-            .psel_i    ( uart_psel    ),
-            .pwdata_i  ( uart_pwdata  ),
-            .prdata_o  ( uart_prdata  ),
-            .pready_o  ( uart_pready  ),
-            .pslverr_o ( uart_pslverr )
+            .clk_i     ( clk_i           ),
+            .rst_ni    ( rst_ni          ),
+            .penable_i ( uart_penable[0] ),
+            .pwrite_i  ( uart_pwrite[0]  ),
+            .paddr_i   ( uart_paddr[0]   ),
+            .psel_i    ( uart_psel[0]    ),
+            .pwdata_i  ( uart_pwdata[0]  ),
+            .prdata_o  ( uart_prdata[0]  ),
+            .pready_o  ( uart_pready[0]  ),
+            .pslverr_o ( uart_pslverr[0] )
         );
         `endif
+        /* pragma translate_on */
+    end
+
+    axi2apb_64_32 #(
+        .AXI4_ADDRESS_WIDTH ( AxiAddrWidth ),
+        .AXI4_RDATA_WIDTH   ( AxiDataWidth ),
+        .AXI4_WDATA_WIDTH   ( AxiDataWidth ),
+        .AXI4_ID_WIDTH      ( AxiIdWidth   ),
+        .AXI4_USER_WIDTH    ( AxiUserWidth ),
+        .BUFF_DEPTH_SLAVE   ( 2            ),
+        .APB_ADDR_WIDTH     ( 32           )
+    ) i_axi2apb_64_32_uart2 (
+        .ACLK      ( clk_i          ),
+        .ARESETn   ( rst_ni         ),
+        .test_en_i ( 1'b0           ),
+        .AWID_i    ( uart2.aw_id     ),
+        .AWADDR_i  ( uart2.aw_addr   ),
+        .AWLEN_i   ( uart2.aw_len    ),
+        .AWSIZE_i  ( uart2.aw_size   ),
+        .AWBURST_i ( uart2.aw_burst  ),
+        .AWLOCK_i  ( uart2.aw_lock   ),
+        .AWCACHE_i ( uart2.aw_cache  ),
+        .AWPROT_i  ( uart2.aw_prot   ),
+        .AWREGION_i( uart2.aw_region ),
+        .AWUSER_i  ( uart2.aw_user   ),
+        .AWQOS_i   ( uart2.aw_qos    ),
+        .AWVALID_i ( uart2.aw_valid  ),
+        .AWREADY_o ( uart2.aw_ready  ),
+        .WDATA_i   ( uart2.w_data    ),
+        .WSTRB_i   ( uart2.w_strb    ),
+        .WLAST_i   ( uart2.w_last    ),
+        .WUSER_i   ( uart2.w_user    ),
+        .WVALID_i  ( uart2.w_valid   ),
+        .WREADY_o  ( uart2.w_ready   ),
+        .BID_o     ( uart2.b_id      ),
+        .BRESP_o   ( uart2.b_resp    ),
+        .BVALID_o  ( uart2.b_valid   ),
+        .BUSER_o   ( uart2.b_user    ),
+        .BREADY_i  ( uart2.b_ready   ),
+        .ARID_i    ( uart2.ar_id     ),
+        .ARADDR_i  ( uart2.ar_addr   ),
+        .ARLEN_i   ( uart2.ar_len    ),
+        .ARSIZE_i  ( uart2.ar_size   ),
+        .ARBURST_i ( uart2.ar_burst  ),
+        .ARLOCK_i  ( uart2.ar_lock   ),
+        .ARCACHE_i ( uart2.ar_cache  ),
+        .ARPROT_i  ( uart2.ar_prot   ),
+        .ARREGION_i( uart2.ar_region ),
+        .ARUSER_i  ( uart2.ar_user   ),
+        .ARQOS_i   ( uart2.ar_qos    ),
+        .ARVALID_i ( uart2.ar_valid  ),
+        .ARREADY_o ( uart2.ar_ready  ),
+        .RID_o     ( uart2.r_id      ),
+        .RDATA_o   ( uart2.r_data    ),
+        .RRESP_o   ( uart2.r_resp    ),
+        .RLAST_o   ( uart2.r_last    ),
+        .RUSER_o   ( uart2.r_user    ),
+        .RVALID_o  ( uart2.r_valid   ),
+        .RREADY_i  ( uart2.r_ready   ),
+        .PENABLE   ( uart_penable[1]),
+        .PWRITE    ( uart_pwrite[1] ),
+        .PADDR     ( uart_paddr[1]  ),
+        .PSEL      ( uart_psel[1]   ),
+        .PWDATA    ( uart_pwdata[1] ),
+        .PRDATA    ( uart_prdata[1] ),
+        .PREADY    ( uart_pready[1] ),
+        .PSLVERR   ( uart_pslverr[1])
+    );
+
+    if (InclUART2) begin : gen_uart2
+        apb_uart i_apb_uart2 (
+            .CLK     ( clk_i             ),
+            .RSTN    ( rst_ni            ),
+            .PSEL    ( uart_psel[1]      ),
+            .PENABLE ( uart_penable[1]   ),
+            .PWRITE  ( uart_pwrite[1]    ),
+            .PADDR   ( uart_paddr[1][4:2]),
+            .PWDATA  ( uart_pwdata[1]    ),
+            .PRDATA  ( uart_prdata[1]    ),
+            .PREADY  ( uart_pready[1]    ),
+            .PSLVERR ( uart_pslverr[1]   ),
+            .INT     ( irq_sources[7]    ),
+            .OUT1N   (                   ), // keep open
+            .OUT2N   (                   ), // keep open
+            .RTSN    (                   ), // no flow control
+            .DTRN    (                   ), // no flow control
+            .CTSN    ( 1'b0              ),
+            .DSRN    ( 1'b0              ),
+            .DCDN    ( 1'b0              ),
+            .RIN     ( 1'b0              ),
+            .SIN     ( rx2_i             ),
+            .SOUT    ( tx2_o             )
+        );
+    end else begin
+        /* pragma translate_off */
+        `ifndef VERILATOR
+        mock_uart i_mock_uart2 (
+            .clk_i     ( clk_i           ),
+            .rst_ni    ( rst_ni          ),
+            .penable_i ( uart_penable[1] ),
+            .pwrite_i  ( uart_pwrite[1]  ),
+            .paddr_i   ( uart_paddr[1]   ),
+            .psel_i    ( uart_psel[1]    ),
+            .pwdata_i  ( uart_pwdata[1]  ),
+            .prdata_o  ( uart_prdata[1]  ),
+            .pready_o  ( uart_pready[1]  ),
+            .pslverr_o ( uart_pslverr[1] )
+        );
+        `endif
+        assign irq_sources[7] = 1'b0;
         /* pragma translate_on */
     end
 
