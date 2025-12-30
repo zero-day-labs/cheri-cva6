@@ -400,7 +400,13 @@ module ex_stage
   generate
     if (CVA6Cfg.FpPresent) begin : fpu_gen
       fu_data_t fpu_data;
+      logic [CVA6Cfg.FLen-1:0] fpu_result;
       assign fpu_data = fpu_valid_i ? fu_data_i : '0;
+      if (CVA6Cfg.CheriPresent) begin
+        assign fpu_result_o = cva6_cheri_pkg::set_cap_reg_addr(cva6_cheri_pkg::REG_NULL_CAP,{{(CVA6Cfg.XLEN-CVA6Cfg.FLen){1'b0}},fpu_result});
+      end else begin
+        assign fpu_result_o = {{(CVA6Cfg.XLEN-CVA6Cfg.FLen){1'b0}},fpu_result};
+      end
 
       fpu_wrap #(
           .CVA6Cfg(CVA6Cfg),
@@ -418,7 +424,7 @@ module ex_stage
           .fpu_frm_i,
           .fpu_prec_i,
           .fpu_trans_id_o,
-          .result_o (fpu_result_o),
+          .result_o (fpu_result),
           .fpu_valid_o,
           .fpu_exception_o
       );

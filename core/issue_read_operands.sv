@@ -578,7 +578,7 @@ module issue_read_operands
 
   // pack signals
   logic [2:0][4:0] fp_raddr_pack;
-  logic [CVA6Cfg.NrCommitPorts-1:0][CVA6Cfg.XLEN-1:0] fp_wdata_pack;
+  logic [CVA6Cfg.NrCommitPorts-1:0][CVA6Cfg.FLen-1:0] fp_wdata_pack;
 
   generate
     if (CVA6Cfg.FpPresent) begin : float_regfile_gen

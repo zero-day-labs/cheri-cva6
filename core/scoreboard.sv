@@ -367,6 +367,7 @@ module scoreboard #(
         issue_instr_o[0].op
     )));
     assign rs_data[k+CVA6Cfg.NrWbPorts] = mem_q[k].sbe.result;
+    assign rs3_data[k+CVA6Cfg.NrWbPorts] = mem_q[k].sbe.result[CVA6Cfg.XLEN-1:0];
   end
 
   // check whether we are accessing GPR[0]
