@@ -36,3 +36,11 @@ if [ "$BOARD" = "nexys_video" ]; then
   export XILINX_BOARD="digilentinc.com:nexys_video:part0:1.1"
   export CLK_PERIOD_NS="40"
 fi
+
+if [ "$BOARD" = "vcu118" ]; then
+  echo -n "Configuring for "
+  echo "VCU118 Virtex UltraScale+"
+  export XILINX_PART="xcvu9p-flga2104-2L-e"
+  export XILINX_BOARD="xilinx.com:vcu118:part0:2.4"
+  export CLK_PERIOD_NS="200"
+fi

@@ -12,3 +12,4 @@
 // Author: Florian Zaruba <zarubaf@iis.ee.ethz.ch>
 
 `define VCU118
+`define ARIANE_DATA_WIDTH 64

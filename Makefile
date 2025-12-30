@@ -37,8 +37,8 @@ torture-logs   :=
 # custom elf bin to run with sim or sim-verilator
 elf_file        ?= tmp/riscv-tests/build/benchmarks/dhrystone.riscv
 # board name for bitstream generation. Currently supported: kc705, genesys2, nexys_video
-BOARD          ?= genesys2
-
+BOARD          ?= vcu118
+DDR_TYPE       ?= ddr4
 # root path
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 root-dir := $(dir $(mkfile_path))
@@ -69,18 +69,27 @@ ifeq ($(BOARD), genesys2)
 	XILINX_PART              := xc7k325tffg900-2
 	XILINX_BOARD             := digilentinc.com:genesys2:part0:1.1
 	CLK_PERIOD_NS            := 20
+	DDR_TYPE								 := ddr3
 else ifeq ($(BOARD), kc705)
 	XILINX_PART              := xc7k325tffg900-2
 	XILINX_BOARD             := xilinx.com:kc705:part0:1.5
 	CLK_PERIOD_NS            := 20
+	DDR_TYPE								 := ddr3
 else ifeq ($(BOARD), vc707)
 	XILINX_PART              := xc7vx485tffg1761-2
 	XILINX_BOARD             := xilinx.com:vc707:part0:1.3
 	CLK_PERIOD_NS            := 20
+	DDR_TYPE							   := ddr3
 else ifeq ($(BOARD), nexys_video)
 	XILINX_PART              := xc7a200tsbg484-1
 	XILINX_BOARD             := digilentinc.com:nexys_video:part0:1.1
 	CLK_PERIOD_NS            := 40
+	DDR_TYPE							   := ddr3
+else ifeq ($(BOARD), vcu118)
+	XILINX_PART              := xcvu9p-flga2104-2L-e
+	XILINX_BOARD             := xilinx.com:vcu118:part0:2.4
+	CLK_PERIOD_NS            := 20
+	DDR_TYPE							   := ddr4
 else
 $(error Unknown board - please specify a supported FPGA board)
 endif
@@ -739,7 +748,7 @@ fpga_filter += $(addprefix $(root-dir), vendor/pulp-platform/tech_cells_generic/
 fpga_filter += $(addprefix $(root-dir), common/local/util/tc_sram_wrapper.sv)
 
 src/bootrom/bootrom_$(XLEN).sv:
-	$(MAKE) -C corev_apu/fpga/src/bootrom BOARD=$(BOARD) XLEN=$(XLEN) bootrom_$(XLEN).sv
+	$(MAKE) -C corev_apu/fpga/src/bootrom BOARD=$(BOARD) XLEN=$(XLEN) DDR_TYPE=$(DDR_TYPE) bootrom_$(XLEN).sv
 
 fpga: $(ariane_pkg) $(src) $(fpga_src) $(uart_src) $(src_flist)
 	@echo "[FPGA] Generate sources"
@@ -749,7 +758,7 @@ fpga: $(ariane_pkg) $(src) $(fpga_src) $(uart_src) $(src_flist)
 	@echo read_verilog -sv {$(filter-out $(fpga_filter), $(src))} 	   >> corev_apu/fpga/scripts/add_sources.tcl
 	@echo read_verilog -sv {$(fpga_src)}   >> corev_apu/fpga/scripts/add_sources.tcl
 	@echo "[FPGA] Generate Bitstream"
-	$(MAKE) -C corev_apu/fpga BOARD=$(BOARD) XILINX_PART=$(XILINX_PART) XILINX_BOARD=$(XILINX_BOARD) CLK_PERIOD_NS=$(CLK_PERIOD_NS)
+	$(MAKE) -C corev_apu/fpga BOARD=$(BOARD) XILINX_PART=$(XILINX_PART) XILINX_BOARD=$(XILINX_BOARD) CLK_PERIOD_NS=$(CLK_PERIOD_NS) DDR_TYPE=$(DDR_TYPE)
 
 .PHONY: fpga
 
@@ -761,7 +770,7 @@ clean:
 	rm -rf $(library)/ $(dpi-library)/ $(ver-library)/ $(vcs-library)/
 	rm -f tmp/*.ucdb tmp/*.log *.wlf *vstf wlft* *.ucdb
 	$(MAKE) -C corev_apu/fpga clean
-	$(MAKE) -C corev_apu/fpga/src/bootrom BOARD=$(BOARD) XLEN=$(XLEN) clean
+	$(MAKE) -C corev_apu/fpga/src/bootrom BOARD=$(BOARD) XLEN=$(XLEN) DDR_TYPE=$(DDR_TYPE)clean
 
 .PHONY:
 	build sim sim-verilate clean                                              \

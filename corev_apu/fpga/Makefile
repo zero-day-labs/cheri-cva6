@@ -5,14 +5,22 @@ work-dir := work-fpga
 bit := $(work-dir)/ariane_xilinx.bit
 mcs := $(work-dir)/ariane_xilinx.mcs
 ip-dir := xilinx
-ips := xlnx_axi_clock_converter.xci  \
-       xlnx_axi_dwidth_converter.xci \
-       xlnx_axi_dwidth_converter_dm_master.xci \
-       xlnx_axi_dwidth_converter_dm_slave.xci \
-       xlnx_axi_quad_spi.xci         \
-       xlnx_axi_gpio.xci             \
-       xlnx_clk_gen.xci              \
-       xlnx_mig_7_ddr3.xci
+ips_common := xlnx_axi_clock_converter.xci  \
+       				xlnx_axi_dwidth_converter.xci \
+       				xlnx_axi_dwidth_converter_dm_master.xci \
+       				xlnx_axi_dwidth_converter_dm_slave.xci \
+       				xlnx_axi_quad_spi.xci         \
+       				xlnx_axi_gpio.xci             \
+       				xlnx_clk_gen.xci
+ips_ddr3 := xlnx_mig_7_ddr3.xci
+ips_ddr4 := xlnx_mig_ddr4.xci	     \
+       			xlnx_axi_dwidth_converter_512_64.xci
+
+ifeq ($(DDR_TYPE), ddr4)
+ips += $(ips_common) $(ips_ddr4)
+else
+ips += $(ips_common) $(ips_ddr3)
+endif
 
 ips := $(addprefix $(work-dir)/, $(ips))
 ips-target := $(join $(addsuffix /ip/, $(addprefix $(ip-dir)/, $(basename $(ips)))), $(ips))

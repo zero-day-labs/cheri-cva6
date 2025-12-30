@@ -134,10 +134,8 @@ module ariane_xilinx (
   output wire          c0_ddr4_act_n   ,
   output wire [0:0]    c0_ddr4_ck_c    ,
   output wire [0:0]    c0_ddr4_ck_t    ,
-  output wire [7:0]    pci_exp_txp     ,
-  output wire [7:0]    pci_exp_txn     ,
-  input  wire [7:0]    pci_exp_rxp     ,
-  input  wire [7:0]    pci_exp_rxn     ,
+  output logic [ 7:0]  led             ,
+  input  logic [ 7:0]  sw              ,
   input  logic         trst_n          ,
 `elsif NEXYS_VIDEO
   input  logic         sys_clk_i   ,
@@ -216,7 +214,7 @@ localparam int unsigned CapSize = 128;
 localparam int unsigned DRAMMemBase = {64'h80000000};
 localparam int unsigned DRAMMemLength = {64'h40000000};
 //localparam int unsigned TagCacheMemBase = {64'hA0000000};
-localparam int unsigned TagCacheMemBase = {64'hB0000000};
+localparam int unsigned TagCacheMemBase = {64'hBFF00000};
 localparam int unsigned TagCacheMemLength = {64'h00010000};
 localparam int unsigned AxiIdWidth = 64'd6;
 localparam int unsigned SetAssociativity = 32'd8;
@@ -880,6 +878,9 @@ end
   logic [7:0] unused_led;
   logic [3:0] unused_switches = 4'b0000;
 `endif
+`ifdef VCU118
+  logic [3:0] unused_switches = 4'b0000;
+`endif
 
 logic clk_200MHz_ref;
 
@@ -901,7 +902,7 @@ ariane_peripherals #(
     .InclSPI      ( 1'b1         ),
     .InclEthernet ( 1'b0         )
     `elsif VCU118
-    .InclSPI      ( 1'b0         ),
+    .InclSPI      ( 1'b1         ),
     .InclEthernet ( 1'b0         )
     `elsif NEXYS_VIDEO
     .InclSPI      ( 1'b1         ),
@@ -924,6 +925,17 @@ ariane_peripherals #(
     .tx_o         ( tx                           ),
     .rx2_i        ( rx2                           ),
     .tx2_o        ( tx2                           ),
+    `ifdef VCU118
+    .eth_txck     ('0                             ),
+    .eth_rxck     ('0                             ),
+    .eth_rxctl    ('0                             ),
+    .eth_rxd      ('0                             ),
+    .eth_rst_n    (                               ),
+    .eth_txctl    (                               ),
+    .eth_txd      (                               ),
+    .eth_mdio     (                               ),
+    .eth_mdc      ('0                             ),
+    `else
     .eth_txck,
     .eth_rxck,
     .eth_rxctl,
@@ -933,6 +945,7 @@ ariane_peripherals #(
     .eth_txd,
     .eth_mdio,
     .eth_mdc,
+    `endif
     .phy_tx_clk_i   ( phy_tx_clk                  ),
     .sd_clk_i       ( sd_clk_sys                  ),
     .spi_clk_o      ( spi_clk_o                   ),
@@ -941,6 +954,9 @@ ariane_peripherals #(
     .spi_ss         ( spi_ss                      ),
     `ifdef KC705
       .leds_o         ( {led[3:0], unused_led[7:4]}),
+      .dip_switches_i ( {sw, unused_switches}     )
+    `elsif VCU118
+      .leds_o         ( led                       ),
       .dip_switches_i ( {sw, unused_switches}     )
     `else
       .leds_o         ( led                       ),
@@ -1247,6 +1263,19 @@ xlnx_clk_gen i_xlnx_clk_gen (
   .clk_in1  ( ddr_clock_out   )  // 100MHz input clock
 );
 
+`elsif VCU118
+
+xlnx_clk_gen i_xlnx_clk_gen (
+  .clk_out1 ( clk             ), // 25 MHz
+  .clk_out2 ( phy_tx_clk      ), // 125 MHz (for RGMII PHY)
+  .clk_out3 ( eth_clk         ), // 125 MHz quadrature (90 deg phase shift)
+  .clk_out4 ( sd_clk_sys      ), // 50 MHz clock
+  .clk_out5 ( clk_200MHz_ref  ), // 200 MHz clock
+  .reset    ( cpu_reset       ),
+  .locked   ( pll_locked      ),
+  .clk_in1  ( ddr_clock_out   )  // 100MHz input clock
+);
+
 `else
 
 xlnx_clk_gen i_xlnx_clk_gen (
@@ -1529,7 +1558,7 @@ xlnx_mig_7_ddr3 i_ddr (
   logic [1:0]   dram_dwidth_axi_rresp;
   logic [511:0] dram_dwidth_axi_rdata;
 
-axi_dwidth_converter_512_64 i_axi_dwidth_converter_512_64 (
+xlnx_axi_dwidth_converter_512_64 i_axi_dwidth_converter_512_64 (
   .s_axi_aclk     ( ddr_clock_out            ),
   .s_axi_aresetn  ( ndmreset_n               ),
 
@@ -1610,7 +1639,7 @@ axi_dwidth_converter_512_64 i_axi_dwidth_converter_512_64 (
   .m_axi_rready   ( dram_dwidth_axi_rready   )
 );
 
-  ddr4_0 i_ddr (
+  xlnx_mig_ddr4 i_ddr (
     .c0_init_calib_complete (                              ),
     .dbg_clk                (                              ),
     .c0_sys_clk_p           ( c0_sys_clk_p                 ),
@@ -1673,7 +1702,7 @@ axi_dwidth_converter_512_64 i_axi_dwidth_converter_512_64 (
     .sys_rst                ( cpu_reset                    )
   );
 
-
+ /*
   logic pcie_ref_clk;
   logic pcie_ref_clk_gt;
 
@@ -2007,6 +2036,7 @@ axi_clock_converter_0 pcie_axi_clock_converter (
   .s_axi_rvalid   ( pcie_dwidth_axi_rvalid   ),
   .s_axi_rready   ( pcie_dwidth_axi_rready   )
 );
+*/
 `endif
 
 endmodule

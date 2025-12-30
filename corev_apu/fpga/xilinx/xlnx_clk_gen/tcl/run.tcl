@@ -8,7 +8,7 @@ set_property board_part $boardName [current_project]
 
 create_ip -name clk_wiz -vendor xilinx.com -library ip -module_name $ipName
 
-if {$::env(BOARD) eq "nexys_video"} {
+if {$::env(BOARD) eq "nexys_video" || $::env(BOARD) eq "vcu118" } {
     set_property -dict [list CONFIG.PRIM_IN_FREQ {100.000} \
                         CONFIG.NUM_OUT_CLKS {5} \
                         CONFIG.CLKOUT2_USED {true} \
