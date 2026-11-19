@@ -7,6 +7,7 @@
 //
 // Original Author: Jean-Roch COULON - Thales
 //
+`ifndef DII
 `ifndef READ_SYMBOL_T
 `define READ_SYMBOL_T
 import "DPI-C" function byte read_symbol (input string symbol_name, inout longint unsigned address);
@@ -17,6 +18,7 @@ import "DPI-C" function byte read_symbol (input string symbol_name, inout longin
 import "DPI-C" function void read_elf(input string filename);
 import "DPI-C" function byte get_section(output longint address, output longint len);
 import "DPI-C" context function read_section_sv(input longint address, inout byte buffer[]);
+`endif
 `endif
 
 
@@ -45,6 +47,7 @@ module rvfi_tracer #(
     f = $fopen($sformatf("trace_rvfi_hart_%h.dasm", HART_ID), "w");
     if (!$value$plusargs("time_out=%d", SIM_FINISH)) SIM_FINISH = 2000000;
     if (!$value$plusargs("tohost_addr=%h", TOHOST_ADDR)) TOHOST_ADDR = '0;
+`ifndef DII
     if (TOHOST_ADDR == '0) begin
         if (!$value$plusargs("elf_file=%s", binary)) binary = "";
         if (binary != "") begin
@@ -58,6 +61,7 @@ module rvfi_tracer #(
             $fwrite(f, "*** [rvfi_tracer] WARNING No valid address of 'tohost' (tohost == 0x%h), termination possible only by timeout or Ctrl-C!\n", TOHOST_ADDR);
         end
     end
+`endif
   end
 
   final $fclose(f);

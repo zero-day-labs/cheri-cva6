@@ -52,3 +52,6 @@
 [submodule "vendor/zero-day/axi_tagcontroller"]
 	path = vendor/zero-day/axi_tagcontroller
 	url = https://github.com/ninolomata/axi_cheri_tagcontroller.git
+[submodule "corev_apu/tb/tb_testRig_cheri/src/SocketPacketUtils"]
+	path = corev_apu/tb/tb_testRig_cheri/src/SocketPacketUtils
+	url = https://github.com/CTSRD-CHERI/SocketPacketUtils

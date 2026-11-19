@@ -42,74 +42,53 @@
 #include <unistd.h>
 #include <vector>
 
-#include <fesvr/dtm.h>
-#include <fesvr/htif_hexwriter.h>
-#include <fesvr/elfloader.h>
-#include "remote_bitbang.h"
 #include <socket_packet_utils.h>
 
 // This software is heavily based on Rocket Chip
 // Checkout this awesome project:
 // https://github.com/freechipsproject/rocket-chip/
-#define DII 1
 
 // This is a 64-bit integer to reduce wrap over issues and
 // allow modulus.  You can also use a double, if you wish.
 static vluint64_t main_time = 0;
 
-static const char *verilog_plusargs[] = {"jtag_rbb_enable", "time_out", "debug_disable"};
+static const char *verilog_plusargs[] = {"time_out"};
 
-#ifndef DROMAJO
-extern dtm_t* dtm;
-extern remote_bitbang_t * jtag;
-
-void handle_sigterm(int sig) {
-  dtm->stop();
-}
-#endif
-
-#ifdef DII
-  struct RVFI_DII_Execution_Packet {
-    std::uint64_t rvfi_order : 64;      // [00 - 07] Instruction number:      INSTRET value after completion.
-    std::uint64_t rvfi_pc_rdata : 64;   // [08 - 15] PC before instr:         PC for current instruction
-    std::uint64_t rvfi_pc_wdata : 64;   // [16 - 23] PC after instr:          Following PC - either PC + 4 or jump/trap target.
-    std::uint64_t rvfi_insn : 64;       // [24 - 31] Instruction word:        32-bit command value.
-    std::uint64_t rvfi_rs1_data : 64;   // [32 - 39] Read register values:    Values as read from registers named
-    std::uint64_t rvfi_rs2_data : 64;   // [40 - 47]                          above. Must be 0 if register ID is 0.
-    std::uint64_t rvfi_rd_wdata : 64;   // [48 - 55] Write register value:    MUST be 0 if rd_ is 0.
-    std::uint64_t rvfi_mem_addr : 64;   // [56 - 63] Memory access addr:      Points to byte address (aligned if define
-                                        //                                      is set). *Should* be straightforward.
-                                        //                                      0 if unused.
-    std::uint64_t rvfi_mem_rdata : 64;  // [64 - 71] Read data:               Data read from mem_addr (i.e. before write)
-    std::uint64_t rvfi_mem_wdata : 64;  // [72 - 79] Write data:              Data written to memory by this command.
-    std::uint8_t rvfi_mem_rmask : 8;    // [80]      Read mask:               Indicates valid bytes read. 0 if unused.
-    std::uint8_t rvfi_mem_wmask : 8;    // [81]      Write mask:              Indicates valid bytes written. 0 if unused.
-    std::uint8_t rvfi_rs1_addr : 8;     // [82]      Read register addresses: Can be arbitrary when not used,
-    std::uint8_t rvfi_rs2_addr : 8;     // [83]                          otherwise set as decoded.
-    std::uint8_t rvfi_rd_addr : 8;      // [84]      Write register address:  MUST be 0 if not used.
-    std::uint8_t rvfi_trap : 8;         // [85] Trap indicator:          Invalid decode, misaligned access or
-                                        //                                      jump command to misaligned address.
-    std::uint8_t rvfi_halt : 8;         // [86] Halt indicator:          Marks the last instruction retired 
-                                        //                                      before halting execution.
-    std::uint8_t rvfi_intr : 8;         // [87] Trap handler:            Set for first instruction in trap handler.     
+struct RVFI_DII_Execution_Packet {
+  std::uint64_t rvfi_order : 64;      // [00 - 07] Instruction number:      INSTRET value after completion.
+  std::uint64_t rvfi_pc_rdata : 64;   // [08 - 15] PC before instr:         PC for current instruction
+  std::uint64_t rvfi_pc_wdata : 64;   // [16 - 23] PC after instr:          Following PC - either PC + 4 or jump/trap target.
+  std::uint64_t rvfi_insn : 64;       // [24 - 31] Instruction word:        32-bit command value.
+  std::uint64_t rvfi_rs1_data : 64;   // [32 - 39] Read register values:    Values as read from registers named
+  std::uint64_t rvfi_rs2_data : 64;   // [40 - 47]                          above. Must be 0 if register ID is 0.
+  std::uint64_t rvfi_rd_wdata : 64;   // [48 - 55] Write register value:    MUST be 0 if rd_ is 0.
+  std::uint64_t rvfi_mem_addr : 64;   // [56 - 63] Memory access addr:      Points to byte address (aligned if define
+                                      //                                      is set). *Should* be straightforward.
+                                      //                                      0 if unused.
+  std::uint64_t rvfi_mem_rdata : 64;  // [64 - 71] Read data:               Data read from mem_addr (i.e. before write)
+  std::uint64_t rvfi_mem_wdata : 64;  // [72 - 79] Write data:              Data written to memory by this command.
+  std::uint8_t rvfi_mem_rmask : 8;    // [80]      Read mask:               Indicates valid bytes read. 0 if unused.
+  std::uint8_t rvfi_mem_wmask : 8;    // [81]      Write mask:              Indicates valid bytes written. 0 if unused.
+  std::uint8_t rvfi_rs1_addr : 8;     // [82]      Read register addresses: Can be arbitrary when not used,
+  std::uint8_t rvfi_rs2_addr : 8;     // [83]                          otherwise set as decoded.
+  std::uint8_t rvfi_rd_addr : 8;      // [84]      Write register address:  MUST be 0 if not used.
+  std::uint8_t rvfi_trap : 8;         // [85] Trap indicator:          Invalid decode, misaligned access or
+                                      //                                      jump command to misaligned address.
+  std::uint8_t rvfi_halt : 8;         // [86] Halt indicator:          Marks the last instruction retired
+                                      //                                      before halting execution.
+  std::uint8_t rvfi_intr : 8;         // [87] Trap handler:            Set for first instruction in trap handler.
 };
 
 struct RVFI_DII_Instruction_Packet {
-    std::uint32_t dii_insn : 32;      // [0 - 3] Instruction word: 32-bit instruction or command. The lower 16-bits
-                                      // may decode to a 16-bit compressed instruction.
-    std::uint16_t dii_time : 16;      // [5 - 4] Time to inject token.  The difference between this and the previous
-                                      // instruction time gives a delay before injecting this instruction.
-                                      // This can be ignored for models but gives repeatability for implementations
-                                      // while shortening counterexamples.
-    std::uint8_t dii_cmd : 8;         // [6] This token is a trace command.  For example, reset device under test.
-    std::uint8_t padding : 8;         // [7]
+  std::uint32_t dii_insn : 32;      // [0 - 3] Instruction word: 32-bit instruction or command. The lower 16-bits
+                                    // may decode to a 16-bit compressed instruction.
+  std::uint16_t dii_time : 16;      // [5 - 4] Time to inject token.  The difference between this and the previous
+                                    // instruction time gives a delay before injecting this instruction.
+                                    // This can be ignored for models but gives repeatability for implementations
+                                    // while shortening counterexamples.
+  std::uint8_t dii_cmd : 8;         // [6] This token is a trace command.  For example, reset device under test.
+  std::uint8_t padding : 8;         // [7]
 };
-
-#endif
-
-extern "C" void read_elf(const char* filename);
-extern "C" char get_section (long long* address, long long* len);
-extern "C" void read_section_void(long long address, void * buffer, uint64_t size = 0);
 
 void PrintInstTrace(RVFI_DII_Instruction_Packet* packet){
   std::cout << "<------Start instruction trace------>" << std::endl;
@@ -121,24 +100,24 @@ void PrintInstTrace(RVFI_DII_Instruction_Packet* packet){
 
 void PrintExecTrace(RVFI_DII_Execution_Packet* packet){
   std::cout << "<------Start execution trace------>" << std::endl;
-  std::cout << "order: " << (int) packet->rvfi_order << std::endl;      
-  std::cout << "pc_rdata: " << std::hex << (int) packet->rvfi_pc_rdata << std::endl;   
-  std::cout << "pc_wdata: " << std::hex << (int) packet->rvfi_pc_wdata << std::endl;   
-  std::cout << "insn: " << std::hex << (int) packet->rvfi_insn << std::endl;       
-  std::cout << "rs1_data: " << std::hex << (int) packet->rvfi_rs1_data << std::endl;   
-  std::cout << "rs2_data: " << std::hex << (int) packet->rvfi_rs2_data << std::endl;   
-  std::cout << "rd_wdata: " << std::hex << (int) packet->rvfi_rd_wdata << std::endl;   
-  std::cout << "mem_addr: " << std::hex << (int) packet->rvfi_mem_addr << std::endl;   
-  std::cout << "mem_rdatal: " << std::hex << (int)packet->rvfi_mem_rdata << std::endl; 
-  std::cout << "mem_wdatal: " << std::hex << (int) packet->rvfi_mem_wdata << std::endl; 
-  std::cout << "mem_rmask: " << std::hex << (int) packet->rvfi_mem_rmask << std::endl;    
-  std::cout << "mem_wmask: " << std::hex << (int) packet->rvfi_mem_wmask << std::endl;   
-  std::cout << "rs1_addr: " << std::hex << (int) packet->rvfi_rs1_addr << std::endl;    
-  std::cout << "rs2_addr: " << std::hex << (int) packet->rvfi_rs2_addr << std::endl;     
-  std::cout << "rd_addr: " << std::hex << (int) packet->rvfi_rd_addr << std::endl;      
-  std::cout << "trap: " << (int) packet->rvfi_trap << std::endl;        
-  std::cout << "halt: " <<  (int) packet->rvfi_halt << std::endl;        
-  std::cout << "instr: " << std::hex << (int) packet->rvfi_intr << std::endl;        
+  std::cout << "order: " << (int) packet->rvfi_order << std::endl;
+  std::cout << "pc_rdata: " << std::hex << (int) packet->rvfi_pc_rdata << std::endl;
+  std::cout << "pc_wdata: " << std::hex << (int) packet->rvfi_pc_wdata << std::endl;
+  std::cout << "insn: " << std::hex << (int) packet->rvfi_insn << std::endl;
+  std::cout << "rs1_data: " << std::hex << (int) packet->rvfi_rs1_data << std::endl;
+  std::cout << "rs2_data: " << std::hex << (int) packet->rvfi_rs2_data << std::endl;
+  std::cout << "rd_wdata: " << std::hex << (int) packet->rvfi_rd_wdata << std::endl;
+  std::cout << "mem_addr: " << std::hex << (int) packet->rvfi_mem_addr << std::endl;
+  std::cout << "mem_rdatal: " << std::hex << (int)packet->rvfi_mem_rdata << std::endl;
+  std::cout << "mem_wdatal: " << std::hex << (int) packet->rvfi_mem_wdata << std::endl;
+  std::cout << "mem_rmask: " << std::hex << (int) packet->rvfi_mem_rmask << std::endl;
+  std::cout << "mem_wmask: " << std::hex << (int) packet->rvfi_mem_wmask << std::endl;
+  std::cout << "rs1_addr: " << std::hex << (int) packet->rvfi_rs1_addr << std::endl;
+  std::cout << "rs2_addr: " << std::hex << (int) packet->rvfi_rs2_addr << std::endl;
+  std::cout << "rd_addr: " << std::hex << (int) packet->rvfi_rd_addr << std::endl;
+  std::cout << "trap: " << (int) packet->rvfi_trap << std::endl;
+  std::cout << "halt: " <<  (int) packet->rvfi_halt << std::endl;
+  std::cout << "instr: " << std::hex << (int) packet->rvfi_intr << std::endl;
   std::cout << "<------Finish execution trace------>" << std::endl;
 }
 
@@ -175,10 +154,8 @@ EMULATOR DEBUG OPTIONS (only supported in debug build -- try `make debug`)\n",
   fputs("\
   -v, --vcd=FILE,          Write vcd trace to FILE (or '-' for stdout)\n\
   -f, --fst=FILE,          Write fst trace to FILE\n\
-  -p,                      Print performance statistic at end of test\n\
 ", stdout);
   // fputs("\n" PLUSARG_USAGE_OPTIONS, stdout);
-  fputs("\n" HTIF_USAGE_OPTIONS, stdout);
   printf("\n"
 "EXAMPLES\n"
 "  - run a bare metal test:\n"
@@ -194,87 +171,52 @@ EMULATOR DEBUG OPTIONS (only supported in debug build -- try `make debug`)\n",
   , program_name, program_name);
 }
 
-// In case we use the DTM we do not want to use the JTAG
-// to preload the data but only use the DTM to host fesvr functionality.
-class preload_aware_dtm_t : public dtm_t {
-  public:
-    preload_aware_dtm_t(int argc, char **argv) : dtm_t(argc, argv) {}
-    bool is_address_preloaded(addr_t taddr, size_t len) override { return true; }
-    // We do not want to reset the hart here as the reset function in `dtm_t` seems to disregard
-    // the privilege level and in general does not perform propper reset (despite the name).
-    // As all our binaries in preloading will always start at the base of DRAM this should not
-    // be such a big problem.
-    void reset() {}
-};
-
 int main(int argc, char **argv) {
   std::clock_t c_start = std::clock();
   auto t_start = std::chrono::high_resolution_clock::now();
   bool verbose;
-  bool perf;
-  unsigned random_seed = (unsigned)time(NULL) ^ (unsigned)getpid();
-  uint64_t max_cycles = -1;
   int ret = 0;
-  bool print_cycles = false;
-  // Port numbers are 16 bit unsigned integers.
-  uint16_t rbb_port = 0;
 #if VM_TRACE
   FILE * vcdfile = NULL;
   char * fst_fname = NULL;
   uint64_t start = 0;
 #endif
-  char ** htif_argv = NULL;
   int verilog_plusargs_legal = 1;
-#if DII
+
   char* socket_name = NULL;
   int socket_default_port = -1;
-#endif
 
   while (1) {
     static struct option long_options[] = {
-      {"cycle-count", no_argument,       0, 'c' },
       {"help",        no_argument,       0, 'h' },
-      {"max-cycles",  required_argument, 0, 'm' },
-      {"seed",        required_argument, 0, 's' },
-      {"rbb-port",    required_argument, 0, 'r' },
       {"verbose",     no_argument,       0, 'V' },
 #if VM_TRACE
       {"vcd",         required_argument, 0, 'v' },
       {"dump-start",  required_argument, 0, 'x' },
       {"fst",         required_argument, 0, 'f' },
 #endif
-#if DII
       {"socket-name",         required_argument, 0, 'q' },
       {"socket-default-port",  required_argument, 0, 'w' },
-#endif
-      HTIF_LONG_OPTIONS
     };
     int option_index = 0;
 #if VM_TRACE
-    int c = getopt_long(argc, argv, "-chpm:s:r:v:f:Vx:", long_options, &option_index);
+    int c = getopt_long(argc, argv, "-hv:f:Vx:q:w:", long_options, &option_index);
 #else
-    int c = getopt_long(argc, argv, "-chpm:s:r:V", long_options, &option_index);
+    int c = getopt_long(argc, argv, "-hV:q:w:", long_options, &option_index);
 #endif
     if (c == -1) break;
  retry:
     switch (c) {
       // Process long and short EMULATOR options
       case '?': usage(argv[0]);             return 1;
-      case 'c': print_cycles = true;        break;
       case 'h': usage(argv[0]);             return 0;
-      case 'm': max_cycles = atoll(optarg); break;
-      case 's': random_seed = atoi(optarg); break;
-      case 'r': rbb_port = atoi(optarg);    break;
       case 'V': verbose = true;             break;
-      case 'p': perf = true;                break;
-#ifdef DII
       case 'q': {
         socket_name = (char*) malloc(strlen(optarg));
         strcpy(socket_name,optarg);
         break;
       }
       case 'w': socket_default_port = atoi(optarg); break;
-#endif
 #if VM_TRACE
       case 'v': {
         vcdfile = strcmp(optarg, "-") == 0 ? stdout : fopen(optarg, "w");
@@ -300,18 +242,12 @@ int main(int argc, char **argv) {
         }
         if (arg == "+verbose")
           c = 'V';
-        else if (arg.substr(0, 12) == "+max-cycles=") {
-          c = 'm';
-          optarg = optarg+12;
-        }
 #if VM_TRACE
         else if (arg.substr(0, 12) == "+dump-start=") {
           c = 'x';
           optarg = optarg+12;
         }
 #endif
-        else if (arg.substr(0, 12) == "+cycle-count")
-          c = 'c';
         // If we don't find a legacy '+' EMULATOR argument, it still could be
         // a VERILOG_PLUSARG and not an error.
         else if (verilog_plusargs_legal) {
@@ -330,19 +266,7 @@ int main(int argc, char **argv) {
           }
           goto retry;
         }
-        // If we STILL don't find a legacy '+' argument, it still could be
-        // an HTIF (HOST) argument and not an error. If this is the case, then
-        // we're done processing EMULATOR and VERILOG arguments.
         else {
-          static struct option htif_long_options [] = { HTIF_LONG_OPTIONS };
-          struct option * htif_option = &htif_long_options[0];
-          while (htif_option->name) {
-            if (arg.substr(1, strlen(htif_option->name)) == htif_option->name) {
-              optind--;
-              goto done_processing;
-            }
-            htif_option++;
-          }
           std::cerr << argv[0] << ": invalid plus-arg (Verilog or HTIF) \""
                     << arg << "\"\n";
           c = '?';
@@ -350,38 +274,19 @@ int main(int argc, char **argv) {
         goto retry;
       }
       case 'P': break; // Nothing to do here, Verilog PlusArg
-      // Realize that we've hit HTIF (HOST) arguments or error out
       default:
-        if (c >= HTIF_LONG_OPTIONS_OPTIND) {
-          optind--;
-          goto done_processing;
-        }
         c = '?';
         goto retry;
     }
   }
 
 done_processing:
-  /* if (optind == argc) {
-    std::cerr << "No binary specified for emulator\n";
-    usage(argv[0]);
-    return 1;
-  } */
-  int htif_argc = 1 + argc - optind;
-  htif_argv = (char **) malloc((htif_argc) * sizeof (char *));
-  htif_argv[0] = argv[0];
-  for (int i = 1; optind < argc;) htif_argv[i++] = argv[optind++];
   std::cout << "start" << std::endl;
 
   const char *vcd_file = NULL;
   Verilated::commandArgs(argc, argv);
 
-  jtag = new remote_bitbang_t(rbb_port);
-  dtm = new preload_aware_dtm_t(htif_argc, htif_argv);
-  signal(SIGTERM, handle_sigterm);
-
   Variane_testharness_dii* top(new Variane_testharness_dii);
-  //read_elf(htif_argv[1]);
 
 #if VM_TRACE
   Verilated::traceEverOn(true); // Verilator must compute traced signals
@@ -436,24 +341,14 @@ done_processing:
   long long addr;
   long long len;
 
-#ifdef DII
   size_t mem_size = 0x900000;
-#else
-  size_t mem_size = 0xFFFFFF;
-  while(get_section(&addr, &len))
-  {
-    if (addr == 0x80000000)
-        read_section_void(addr, (void *) MEM , mem_size);
-  }
-#endif
-#ifdef DII
   unsigned long long socket = serv_socket_create(socket_name, socket_default_port);
   serv_socket_init(socket);
   unsigned int received = 0;
   unsigned int insn_count = 0;
   unsigned int traces_count = 0;
   unsigned int num_insn = 0;
-  // instruction 
+  // instruction
   bool busy = false;
   bool inflight = false;
   bool eof_trace = false;
@@ -461,26 +356,18 @@ done_processing:
   char recbuf[sizeof(RVFI_DII_Instruction_Packet) + 1] = {0};
   std::vector<RVFI_DII_Instruction_Packet> instructions;
   std::vector<RVFI_DII_Execution_Packet> returntrace;
-#endif
-#if !defined(DROMAJO) || !defined(DII)
-  while (!dtm->done() && !jtag->done() && !(top->exit_o & 0x1)) {
-#else
-  // the simulation gets killed by dromajo
   while (true) {
-#endif
-
-#ifdef DII
     // Routine to fetch a batch of intructions from the Vengine
     if (num_insn == 0) {
       fetchInstructions(instructions, received, socket);
       busy = true;
       num_insn = instructions.size();
     }
-    
+
     while (busy) {
-        if (readTrace(returntrace, top)){
-          traces_count++;
-        }
+      if (readTrace(returntrace, top)){
+        traces_count++;
+      }
       // Routine to inject instructions into the core via RVFIDII interface
       if (!instructions.empty() /* && !inflight */){
         if ((traces_count != num_insn-1) && (top->rvfi_trap_o || (top->rvfi_valid_o && (top->rvfi_insn_o & 0x7F) == 0xF))) {
@@ -503,27 +390,26 @@ done_processing:
           inflight = false;
         }
       }
-#endif
-    top->clk_i = 0;
-    top->eval();
+      top->clk_i = 0;
+      top->eval();
 #if VM_TRACE
-    if (vcdfile || fst_fname)
-      tfp->dump(static_cast<vluint64_t>(main_time * 2));
+      if (vcdfile || fst_fname)
+        tfp->dump(static_cast<vluint64_t>(main_time * 2));
 #endif
 
-    top->clk_i = 1;
-    top->eval();
+      top->clk_i = 1;
+      top->eval();
 #if VM_TRACE
-    if (vcdfile || fst_fname)
-      tfp->dump(static_cast<vluint64_t>(main_time * 2 + 1));
+      if (vcdfile || fst_fname)
+        tfp->dump(static_cast<vluint64_t>(main_time * 2 + 1));
 #endif
-    // toggle RTC
-    if (main_time % 2 == 0) {
-      top->rtc_i ^= 1;
-    }
-    main_time++;
+      // toggle RTC
+      if (main_time % 2 == 0) {
+        top->rtc_i ^= 1;
+      }
+      main_time++;
 
-    // Reset Routine 
+      // Reset Routine
       if (eof_trace){
         for (int i = 0; i < 10; i++) {
           top->rst_ni = 0;
@@ -559,10 +445,11 @@ done_processing:
         returntrace.push_back(rstpack);
         instructions.clear();
       }
-    }
-    // Routine to return trace to Vengine
-    while (!returntrace.empty()) {
-      returnTrace(returntrace, socket);
+
+      // Routine to return trace to Vengine
+      while (!returntrace.empty()) {
+        returnTrace(returntrace, socket);
+      }
     }
   }
 
@@ -573,33 +460,8 @@ done_processing:
     fclose(vcdfile);
 #endif
 
-  /* if (dtm->exit_code()) {
-    fprintf(stderr, "%s *** FAILED *** (tohost = %d) after %ld cycles\n", htif_argv[1], dtm->exit_code(), main_time);
-    ret = dtm->exit_code();
-  } else if (jtag->exit_code()) {
-    fprintf(stderr, "%s *** FAILED *** (tohost = %d, seed %d) after %ld cycles\n", htif_argv[1], jtag->exit_code(), random_seed, main_time);
-    ret = jtag->exit_code();
-  } else if (top->exit_o & 0xFFFFFFFE) {
-    int exitcode = ((unsigned int) top->exit_o) >> 1;
-    fprintf(stderr, "%s *** FAILED *** (tohost = %d) after %ld cycles\n", htif_argv[1], exitcode, main_time);
-    ret = exitcode;
-  } else {
-    fprintf(stderr, "%s *** SUCCESS *** (tohost = 0) after %ld cycles\n", htif_argv[1], main_time);
-  } */
-
-  if (dtm) delete dtm;
-  if (jtag) delete jtag;
-
   std::clock_t c_end = std::clock();
   auto t_end = std::chrono::high_resolution_clock::now();
-
-  if (perf) {
-    std::cout << std::fixed << std::setprecision(2) << "CPU time used: "
-              << 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC << " ms\n"
-              << "Wall clock time passed: "
-              << std::chrono::duration<double, std::milli>(t_end-t_start).count()
-              << " ms\n";
-  }
 
   return ret;
 }
@@ -669,9 +531,6 @@ void returnTrace(std::vector<RVFI_DII_Execution_Packet> &returntrace, unsigned l
       } else {
         returntrace.erase(returntrace.begin());
       }
-      for (int i = 0; i < tosend; i++) {
-        PrintExecTrace(&sendarr[i]);
-      }
       // loop to make sure that the packet has been properly sent
       while(!serv_socket_putN(socket, sizeof(RVFI_DII_Execution_Packet) * tosend, (unsigned int *) sendarr));
     }
@@ -684,6 +543,7 @@ bool readTrace(std::vector<RVFI_DII_Execution_Packet> &returntrace, Variane_test
   // this deals with counting instructions that the core has finished executing
   if (top->rvfi_valid_o || top->rvfi_trap_o) {
     RVFI_DII_Execution_Packet execpacket = readRVFI(top);
+    PrintExecTrace(&execpacket);
     returntrace.push_back(execpacket);
     return true;
   }

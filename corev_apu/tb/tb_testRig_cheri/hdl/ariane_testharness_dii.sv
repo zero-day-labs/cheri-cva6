@@ -31,7 +31,6 @@ module ariane_testharness_dii import cva6_cheri_pkg::*; #(
   parameter int unsigned AXI_USER_EN       = CVA6Cfg.AXI_USER_EN,
   parameter int unsigned AXI_ADDRESS_WIDTH = 64,
   parameter int unsigned AXI_DATA_WIDTH    = 64,
-  parameter bit          InclSimDTM        = 1'b1,
   parameter int unsigned NUM_WORDS         = 2**25,         // memory size
   parameter bit          StallRandomOutput = 1'b0,
   parameter bit          StallRandomInput  = 1'b0
@@ -90,41 +89,13 @@ module ariane_testharness_dii import cva6_cheri_pkg::*; #(
   logic        test_en;
   logic        ndmreset;
   logic        ndmreset_n;
-  logic        debug_req_core;
 
-  int          jtag_enable;
   logic        init_done;
-  logic [31:0] jtag_exit, dmi_exit;
   logic [31:0] rvfi_exit;
 
-  logic        jtag_TCK;
-  logic        jtag_TMS;
-  logic        jtag_TDI;
-  logic        jtag_TRSTn;
-  logic        jtag_TDO_data;
-  logic        jtag_TDO_driven;
-
-  logic        debug_req_valid;
   logic        debug_req_ready;
   logic        debug_resp_valid;
   logic        debug_resp_ready;
-
-  logic        jtag_req_valid;
-  logic [6:0]  jtag_req_bits_addr;
-  logic [1:0]  jtag_req_bits_op;
-  logic [31:0] jtag_req_bits_data;
-  logic        jtag_resp_ready;
-  logic        jtag_resp_valid;
-
-  logic        dmi_req_valid;
-  logic        dmi_resp_ready;
-  logic        dmi_resp_valid;
-
-  dm::dmi_req_t  jtag_dmi_req;
-  dm::dmi_req_t  dmi_req;
-
-  dm::dmi_req_t  debug_req;
-  dm::dmi_resp_t debug_resp;
 
   logic [31:0] dii_insn;
   logic dii_ready;
@@ -160,104 +131,7 @@ module ariane_testharness_dii import cva6_cheri_pkg::*; #(
 
   logic debug_enable;
   initial begin
-    if (!$value$plusargs("jtag_rbb_enable=%b", jtag_enable)) jtag_enable = 'h0;
-    if ($test$plusargs("debug_disable")) debug_enable = 'h0; else debug_enable = 'h1;
     if (CVA6Cfg.XLEN != 32 & CVA6Cfg.XLEN != 64) $error("CVA6Cfg.XLEN different from 32 and 64");
-  end
-
-  // debug if MUX
-  assign debug_req_valid     = (jtag_enable[0]) ? jtag_req_valid     : dmi_req_valid;
-  assign debug_resp_ready    = (jtag_enable[0]) ? jtag_resp_ready    : dmi_resp_ready;
-  assign debug_req           = (jtag_enable[0]) ? jtag_dmi_req       : dmi_req;
-  if (ariane_pkg::RVFI) begin
-    assign exit_o              = (jtag_enable[0]) ? jtag_exit          : rvfi_exit;
-  end else begin
-    assign exit_o              = (jtag_enable[0]) ? jtag_exit          : dmi_exit;
-  end
-  assign jtag_resp_valid     = (jtag_enable[0]) ? debug_resp_valid   : 1'b0;
-  assign dmi_resp_valid      = (jtag_enable[0]) ? 1'b0               : debug_resp_valid;
-
-  // SiFive's SimJTAG Module
-  // Converts to DPI calls
-  SimJTAG i_SimJTAG (
-    .clock                ( clk_i                ),
-    .reset                ( ~rst_ni              ),
-    .enable               ( jtag_enable[0]       ),
-    .init_done            ( init_done            ),
-    .jtag_TCK             ( jtag_TCK             ),
-    .jtag_TMS             ( jtag_TMS             ),
-    .jtag_TDI             ( jtag_TDI             ),
-    .jtag_TRSTn           ( jtag_TRSTn           ),
-    .jtag_TDO_data        ( jtag_TDO_data        ),
-    .jtag_TDO_driven      ( jtag_TDO_driven      ),
-    .exit                 ( jtag_exit            )
-  );
-
-  dmi_jtag i_dmi_jtag (
-    .clk_i            ( clk_i           ),
-    .rst_ni           ( rst_ni          ),
-    .testmode_i       ( test_en         ),
-    .dmi_req_o        ( jtag_dmi_req    ),
-    .dmi_req_valid_o  ( jtag_req_valid  ),
-    .dmi_req_ready_i  ( debug_req_ready ),
-    .dmi_resp_i       ( debug_resp      ),
-    .dmi_resp_ready_o ( jtag_resp_ready ),
-    .dmi_resp_valid_i ( jtag_resp_valid ),
-    .dmi_rst_no       (                 ), // not connected
-    .tck_i            ( jtag_TCK        ),
-    .tms_i            ( jtag_TMS        ),
-    .trst_ni          ( jtag_TRSTn      ),
-    .td_i             ( jtag_TDI        ),
-    .td_o             ( jtag_TDO_data   ),
-    .tdo_oe_o         ( jtag_TDO_driven )
-  );
-
-  // SiFive's SimDTM Module
-  // Converts to DPI calls
-  logic [1:0] debug_req_bits_op;
-  assign dmi_req.op = dm::dtm_op_e'(debug_req_bits_op);
-
-  if (InclSimDTM) begin
-    SimDTM i_SimDTM (
-      .clk                  ( clk_i                 ),
-      .reset                ( ~rst_ni               ),
-      .debug_req_valid      ( dmi_req_valid         ),
-      .debug_req_ready      ( debug_req_ready       ),
-      .debug_req_bits_addr  ( dmi_req.addr          ),
-      .debug_req_bits_op    ( debug_req_bits_op     ),
-      .debug_req_bits_data  ( dmi_req.data          ),
-      .debug_resp_valid     ( dmi_resp_valid        ),
-      .debug_resp_ready     ( dmi_resp_ready        ),
-      .debug_resp_bits_resp ( debug_resp.resp       ),
-      .debug_resp_bits_data ( debug_resp.data       ),
-      .exit                 ( dmi_exit              )
-    );
-  end else begin
-    assign dmi_req_valid = '0;
-    assign debug_req_bits_op = '0;
-    assign dmi_exit = 1'b0;
-  end
-
-  // this delay window allows the core to read and execute init code
-  // from the bootrom before the first debug request can interrupt
-  // core. this is needed in cases where an fsbl is involved that
-  // expects a0 and a1 to be initialized with the hart id and a
-  // pointer to the dev tree, respectively.
-  localparam int unsigned DmiDelCycles = 500;
-
-  logic debug_req_core_ungtd;
-  int dmi_del_cnt_d, dmi_del_cnt_q;
-
-  assign dmi_del_cnt_d  = (dmi_del_cnt_q) ? dmi_del_cnt_q - 1 : 0;
-  assign debug_req_core = (dmi_del_cnt_q) ? 1'b0 :
-                          (!debug_enable) ? 1'b0 : debug_req_core_ungtd;
-
-  always_ff @(posedge clk_i or negedge rst_ni) begin : p_dmi_del_cnt
-    if(!rst_ni) begin
-      dmi_del_cnt_q <= DmiDelCycles;
-    end else begin
-      dmi_del_cnt_q <= dmi_del_cnt_d;
-    end
   end
 
   ariane_axi::req_t    dm_axi_m_req;
@@ -290,7 +164,7 @@ module ariane_testharness_dii import cva6_cheri_pkg::*; #(
     .testmode_i           ( test_en                     ),
     .ndmreset_o           ( ndmreset                    ),
     .dmactive_o           (                             ), // active debug session
-    .debug_req_o          ( debug_req_core_ungtd        ),
+    .debug_req_o          ( /* NC */                    ),
     .unavailable_i        ( '0                          ),
     .hartinfo_i           ( {ariane_pkg::DebugHartInfo} ),
     .slave_req_i          ( dm_slave_req                ),
@@ -308,12 +182,12 @@ module ariane_testharness_dii import cva6_cheri_pkg::*; #(
     .master_r_valid_i     ( dm_master_r_valid           ),
     .master_r_rdata_i     ( dm_master_r_rdata           ),
     .dmi_rst_ni           ( rst_ni                      ),
-    .dmi_req_valid_i      ( debug_req_valid             ),
-    .dmi_req_ready_o      ( debug_req_ready             ),
-    .dmi_req_i            ( debug_req                   ),
-    .dmi_resp_valid_o     ( debug_resp_valid            ),
-    .dmi_resp_ready_i     ( debug_resp_ready            ),
-    .dmi_resp_o           ( debug_resp                  )
+    .dmi_req_valid_i      ( 1'b0                        ),
+    .dmi_req_ready_o      ( /* NC */                    ),
+    .dmi_req_i            ( /* NC */                    ),
+    .dmi_resp_valid_o     ( /* NC */                    ),
+    .dmi_resp_ready_i     ( 1'b0                        ),
+    .dmi_resp_o           ( /* NC */                    )
   );
 
 
